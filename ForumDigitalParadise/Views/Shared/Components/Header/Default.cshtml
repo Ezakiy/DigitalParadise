@@ -1,0 +1,334 @@
+﻿@using ForumDigitalParadise.Data.Models;
+@using Microsoft.AspNetCore.Identity;
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+<style>
+    .switchaccpopup {
+        display: none;
+    }
+
+</style>
+<header>
+    <div class="header-container">
+        <div class="menu-icon" id="menuIcon">
+            <ion-icon name="menu-outline" class="side-icon menu-side-icon"></ion-icon>
+        </div>
+        <div class="tooltip-header" id="tooltip">Open navigation</div>
+        <div class="header-fixing">
+            <a asp-controller="Home" asp-action="Index">
+                <img src="~/img/Logo/Logo.png" class="logo" alt="Logo" id="logoHeader">
+            </a>
+            <div class="tooltip-logoheader" id="tooltip-logoheader">Go to DigitalParadise Home</div>
+
+            <div class="search-container-suggestions">
+                <form asp-controller="Search" asp-action="Search" method="post" class="search-container">
+                    <ion-icon name="search-outline" class="icon-search-index"></ion-icon>
+                        <input name="searchQuery" type="text" class="homeSearch" placeholder="Search..." id="searchInput" autocomplete="off" value="@ViewBag.SearchQuery" />
+                        <ion-icon name="close-circle-outline" class="clear-icon" id="clearSearchInput" style="display: none;"></ion-icon>
+                    <div id="suggestions"></div>
+                </form>
+            </div>
+
+            <nav class="navbar">
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <div class="navbar-icons">
+                        <div class="notification-container">
+                            <span id="unreadNotificationsCount" class="badge"></span>
+                            <span><ion-icon id="notificationIcon" class="notificationIcon" name="notifications-outline"></ion-icon></span>
+                        </div>
+                    </div>
+                    <div id="notificationDropdown" class="notification-dropdown"></div>
+                    <div class="notification-panel" id="notificationPanel">
+                        <div class="notification-header">
+                            <p>Notifications</p>
+                        </div>
+                        <div class="notification-body" id="notificationsBody"></div>
+                    </div>
+                }
+                <ul>
+                    @await Html.PartialAsync("_LoginPartial")
+                </ul>
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <div class="header-user-dropdown">
+                        <div class="dropdown-btn">
+                            <div class="profile-img">
+                                @{
+                                    var user = await UserManager.GetUserAsync(User);
+                                    var webrootpathUser = "~/img/ProfileImages/";
+                                    var profileImageUrl = user?.ProfileImageUrl != null ? webrootpathUser + user.ProfileImageUrl : "~/img/users/default_image.jpg";
+                                }
+                                <img src="@Url.Content(profileImageUrl)" alt="Profile Image" class="UserImageFix" />
+                            </div>
+                        </div>
+                        <div class="user-dropdown-list">
+                            <div class="viewprofile-dropdown">
+                                <img src="@Url.Content(profileImageUrl)" alt="Profile Image">
+                                <div class="viewprofileDetails-dropdown">
+                                    <a asp-controller="Profile" asp-action="Overview" asp-route-id="@UserManager.GetUserId(User)">View Profile</a>
+                                    <p>u/@user.DisplayName</p>
+                                </div>
+                            </div>
+
+                            <div class="viewnotifications-dropdown">
+                                <ion-icon class="dropdown-icons" name="people-outline"></ion-icon>
+                                <a id="myFollowersLink">My Followers</a>
+                            </div>
+
+                            <div class="viewaccounts-dropdown">
+                                <ion-icon class="dropdown-icons" name="git-compare-outline"></ion-icon>
+                                <a id="switchAccountsLink" href="#">Switch Accounts</a>
+                            </div>
+
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <hr class="dropdown-hr">
+                                <div class="DetailedItems-dropdown">
+                                    <span>
+                                        <ion-icon class="AdminAcess-icon" name="accessibility-outline"></ion-icon>
+                                        Admin Access
+                                    </span>
+                                </div>
+                                <div class="DetailedItems-dropdown">
+                                    <ion-icon class="dropdown-icons" name="pencil-outline"></ion-icon>
+                                    <a asp-controller="Forum" asp-action="Create">Create Paradise</a>
+                                </div>
+                                <div class="DetailedItems-dropdown">
+                                    <ion-icon class="dropdown-icons" name="people-outline"></ion-icon>
+                                    <a asp-controller="Admin" asp-action="Index">View Users</a>
+                                </div>
+                                <div class="DetailedItems-dropdown">
+                                    <ion-icon class="dropdown-icons" name="telescope-outline"></ion-icon>
+                                    <a asp-controller="Forum" asp-action="Index">View Paradises</a>
+                                </div>
+                            }
+                            <hr class="dropdown-hr">
+                            <div class="DetailedItems-dropdown">
+                                <ion-icon class="dropdown-icons" name="settings-outline"></ion-icon>
+                                <a asp-controller="Profile" asp-action="Settings" asp-route-id="@UserManager.GetUserId(User)">Settings</a>
+                            </div>
+                            <hr class="dropdown-hr">
+                            <form class="form-inline">
+                                <div class="DetailedItems-dropdown">
+                                    <ion-icon class="dropdown-icons" name="log-out-outline"></ion-icon>
+                                    <a asp-controller="Account" asp-action="Logout">Log Out</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </nav>
+        </div>
+    </div>
+    <div style="display:flex; justify-content: center;">
+        <hr style="height: 1px; color: white; background-color: #9aabe15c; border: none; width: 100%; max-width: 1860px; margin: 0; padding: 0;">
+    </div>
+</header>
+
+<script>
+   
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("searchInput");
+        const clearSearchInput = document.getElementById("clearSearchInput");
+        const suggestionsContainer = document.getElementById("suggestions");
+        const searchForm = searchInput.closest("form");
+        const searchContainerSuggestions = document.querySelector(".search-container-suggestions");
+
+        searchInput.addEventListener("input", function () {
+            const query = searchInput.value;
+            if (query.length > 0) {
+                clearSearchInput.style.display = 'block';
+                fetch(`/Search/GetSuggestions?query=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        suggestionsContainer.innerHTML = '';
+                        if (data.length > 0) {
+                            suggestionsContainer.style.display = 'block';
+                            data.forEach(item => {
+                                const suggestion = document.createElement("div");
+                                suggestion.className = "suggestion-item";
+                                suggestion.textContent = item.name;
+                                suggestion.addEventListener("click", () => {
+                                    searchInput.value = item.name;
+                                    suggestionsContainer.innerHTML = '';
+                                    suggestionsContainer.style.display = 'none';
+                                    searchForm.submit();
+                                });
+                                suggestionsContainer.appendChild(suggestion);
+                            });
+                            searchContainerSuggestions.style.borderRadius = "20px 20px 0 0";
+                        } else {
+                            suggestionsContainer.style.display = 'none';
+                            searchContainerSuggestions.style.borderRadius = "20px";
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching suggestions:", error);
+                    });
+            } else {
+                clearSearchInput.style.display = 'none';
+                suggestionsContainer.innerHTML = '';
+                suggestionsContainer.style.display = 'none';
+                searchContainerSuggestions.style.borderRadius = "20px";
+            }
+        });
+
+        clearSearchInput.addEventListener("click", function () {
+            searchInput.value = '';
+            clearSearchInput.style.display = 'none';
+            suggestionsContainer.innerHTML = '';
+            suggestionsContainer.style.display = 'none';
+            searchContainerSuggestions.style.borderRadius = "20px";
+            searchInput.focus();
+        });
+
+        searchInput.addEventListener("focus", function () {
+            const query = searchInput.value;
+            if (query.length > 0) {
+                fetch(`/Search/GetSuggestions?query=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        suggestionsContainer.innerHTML = '';
+                        if (data.length > 0) {
+                            suggestionsContainer.style.display = 'block';
+                            data.forEach(item => {
+                                const suggestion = document.createElement("div");
+                                suggestion.className = "suggestion-item";
+                                suggestion.textContent = item.name;
+                                suggestion.addEventListener("click", () => {
+                                    searchInput.value = item.name;
+                                    suggestionsContainer.innerHTML = '';
+                                    suggestionsContainer.style.display = 'none';
+                                    searchForm.submit();
+                                });
+                                suggestionsContainer.appendChild(suggestion);
+                            });
+                            searchContainerSuggestions.style.borderRadius = "20px 20px 0 0";
+                        } else {
+                            suggestionsContainer.style.display = 'none';
+                            searchContainerSuggestions.style.borderRadius = "20px";
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching suggestions:", error);
+                    });
+            }
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!searchInput.contains(event.target) && !suggestionsContainer.contains(event.target)) {
+                suggestionsContainer.style.display = 'none';
+                searchContainerSuggestions.style.borderRadius = "20px";
+            }
+        });
+    });
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("myFollowersModal");
+        const btn = document.getElementById("myFollowersLink");
+        const span = document.getElementsByClassName("close")[0];
+        const followersContent = document.getElementById("followersContent");
+
+        btn.onclick = async function (event) {
+            event.preventDefault();
+            try {
+                const response = await fetch('/Inboxes/LoadFollowers');
+                const content = await response.text();
+                followersContent.innerHTML = content;
+                modal.style.display = "block";
+            } catch (error) {
+                console.error('Error loading followers:', error);
+            }
+        };
+
+        span.onclick = function () {
+            modal.style.display = "none";
+        };
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const notificationIcon = document.querySelector('.notificationIcon');
+        const notificationPanel = document.getElementById('notificationPanel');
+        const notificationHeader = document.querySelector('.notification-header p');
+
+        notificationIcon.addEventListener('click', () => {
+            if (notificationPanel.style.display === 'block') {
+                notificationPanel.style.display = 'none';
+                notificationHeader.classList.remove('active');
+                notificationIcon.setAttribute('name', 'notifications-outline');
+            } else {
+                notificationPanel.style.display = 'block';
+                notificationHeader.classList.add('active');
+                notificationIcon.setAttribute('name', 'notifications'); 
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!notificationPanel.contains(event.target) && !notificationIcon.contains(event.target)) {
+                notificationPanel.style.display = 'none';
+                notificationHeader.classList.remove('active');
+                notificationIcon.setAttribute('name', 'notifications-outline');
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const dropdownBtn = document.querySelector('.dropdown-btn');
+        const userDropdownList = document.querySelector('.user-dropdown-list');
+
+        dropdownBtn.addEventListener('click', () => {
+            if (userDropdownList.style.display === 'block') {
+                userDropdownList.style.display = 'none';
+                dropdownBtn.classList.remove('active');
+            } else {
+                userDropdownList.style.display = 'block';
+                dropdownBtn.classList.add('active');
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!dropdownBtn.contains(event.target) && !userDropdownList.contains(event.target)) {
+                userDropdownList.style.display = 'none';
+                dropdownBtn.classList.remove('active');
+            }
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const menuIcon = document.getElementById('menuIcon');
+        const tooltip = document.getElementById('tooltip');
+
+        menuIcon.addEventListener('mouseenter', () => {
+            tooltip.style.display = 'block';
+            tooltip.style.opacity = '1';
+        });
+
+        menuIcon.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+            tooltip.style.opacity = '0';
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const menuIcon = document.getElementById('logoHeader');
+        const tooltip = document.getElementById('tooltip-logoheader');
+
+        menuIcon.addEventListener('mouseenter', () => {
+            tooltip.style.display = 'block';
+            tooltip.style.opacity = '1';
+        });
+
+        menuIcon.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+            tooltip.style.opacity = '0';
+        });
+    });
+</script>

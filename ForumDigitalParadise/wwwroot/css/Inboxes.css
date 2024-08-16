@@ -1,0 +1,152 @@
+﻿.MyFollowers-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgb(22, 22, 22);
+    width: 450px;
+    padding: 15px;
+    border-radius: 32px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    text-align: center;
+}
+
+.MyFollowers-header{
+    margin-top: 50px;
+}
+
+.frontPageSubHeading-Myfollowers {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.Myfollowers-TitleInput {
+    position: relative;
+    margin-top: 25px;
+    margin-bottom: 25px;
+    width: 100%;
+    max-width: 370px;
+    padding: 15px;
+    background-color: rgb(12, 12, 12);
+    border-radius: 20px;
+    border: 1px solid #8686865e;
+    display: flex;
+    align-items: center;
+}
+
+    .Myfollowers-TitleInput.focused {
+        border-color: white; 
+    }
+
+    .followers-header-search {
+        position: relative;
+        flex: 1;
+    }
+
+    .followers-header-search input {
+        background-color: rgba(247, 17, 17, 0);
+        color: white;
+        font-size: 14px;
+        width: 100%;
+        border: none;
+        outline: none;
+    }     
+
+        .placeholder-myfollowers {
+            position: absolute;
+            top: 50%;
+            left:0;
+            transform: translateY(-50%);
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            pointer-events: none;
+            transition: top 0.3s ease, font-size 0.3s ease;
+        }
+
+.searchbar-MyFollowers:focus + .placeholder-myfollowers,
+.searchbar-MyFollowers:not(:placeholder-shown) + .placeholder-myfollowers {
+    top: 0px;
+    left: 0px; 
+    transform: translateY(-100%);
+    font-size: 12px;
+    color: white;
+}
+
+.follower-container-index {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    width: 100%;
+    max-width: 410px;
+    border-radius: 20px;
+    cursor: default;
+    overflow: hidden;
+    overflow-x: auto;
+    box-sizing: border-box;
+    text-align: left;
+    gap: 20px;
+}
+
+.follower-section {
+    display: flex;
+    align-items: center;  
+    cursor: default;
+}
+
+.MyFollowers-img{
+    width: 46px;
+    height: 46px;
+}
+
+.MyFollowers-img img{
+    width: 100%;
+    height: 100%;
+    border-radius: 50px;
+}
+
+.follower-info {
+    margin-left: 5px;
+    margin-top: 10px;
+    cursor: text;
+    
+}
+
+    .follower-info a {
+        color: white;
+        text-decoration: none;
+    }
+
+        .follower-info a:hover{
+            text-decoration: underline;
+        }
+
+    .follower-info button {        
+        padding: 7px;
+        margin-left: 15px;
+        transition: 0.2s;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+.unfollow-button-myfollowers {
+    background-color: rgb(27, 27, 27);
+    border: 1px solid white;
+}
+
+    .unfollow-button-myfollowers:hover {
+        background-color: rgb(47, 47, 47);
+    }
+
+    .follow-back-button-myfollowers {
+        background-color: rgb(56, 117, 128);
+    }
+
+        .follow-back-button-myfollowers:hover {
+            background-color: rgb(25, 94, 108);
+        }

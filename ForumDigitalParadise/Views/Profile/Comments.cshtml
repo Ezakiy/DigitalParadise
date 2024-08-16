@@ -1,0 +1,390 @@
+﻿@model ForumDigitalParadise.Models.ApplicationUser.ProfileModel
+@inject Microsoft.AspNetCore.Identity.UserManager<ForumDigitalParadise.Data.Models.ApplicationUser> UserManager
+@inject ForumDigitalParadise.Data.IFollower FollowerService
+
+@{
+    string currentView = ViewContext.RouteData.Values["action"]?.ToString();
+
+    Func<string, string> isActive = (string action) =>
+    {
+        return currentView == action ? "active" : "";
+    };
+}
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var currentUserId = currentUser?.Id;
+    var isFollowing = await FollowerService.IsFollowingAsync(currentUserId, Model.UserId);
+    var followerCount = await FollowerService.GetFollowersCountAsync(Model.UserId);
+    var followerText = followerCount == 1 ? "Follower" : "Followers";
+}
+
+<main style="margin-top: 0;">
+    <div class="profile-container">
+        <div class="page-wrapper-profile-details">
+            <div class="user-profile-info">
+                <div class="user-profile-image-overview">
+                    <img src="@Url.Content(Model.ProfileImageUrl)" alt="Profile Image" />
+                    @if (Model.IsOwner)
+                    {
+                        <ion-icon class="camera-icon-image" name="camera-outline" onclick="triggerProfileUpload()"></ion-icon>
+                        <form id="profileImageForm" asp-action="UploadProfileImage" asp-controller="Profile" enctype="multipart/form-data" method="post" style="display: none;">
+                            <input type="file" id="profileImageInput" name="file" accept="image/*" onchange="submitProfileForm()">
+                        </form>
+                    }
+                </div>
+                <div>
+                    <p>@Model.UserName</p>
+                    <span>u/@Model.DisplayName</span>
+                </div>
+            </div>
+            <div class="followers-userProfile">
+
+                <div class="followers-following">
+                    @if (Model.IsOwner)
+                    {
+                        <div class="profile-followerCount">
+                            <a id="followerCount" class="myFollowersLink">@followerCount</a>
+                            <span>@followerText</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="display:flex; gap: 5px;">
+                            <p id="followerCount">@followerCount</p>
+                            <span>@followerText</span>
+                        </div>
+                    }
+
+                    @if (Model.IsOwner)
+                    {
+                        <div style="display:flex; gap: 5px;">
+                            <p id="followingCount">0</p>
+                            <span>Following</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="display:flex; gap: 5px;">
+                            <p id="followingCount">0</p>
+                            <span>Following</span>
+                        </div>
+                    }
+                </div>
+
+                @if (User.Identity.IsAuthenticated)
+                {
+                    @if (!Model.IsOwner)
+                    {
+                        <div id="followUnfollowSection">
+                            @if (isFollowing)
+                            {
+                                <button type="button" class="unfollow-btn" onclick="unfollowUser('@Model.UserId')">Unfollow</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="follow-btn" onclick="followUser('@Model.UserId')">Follow</button>
+                            }
+                        </div>
+                    }
+                }
+
+            </div>
+        </div>
+
+        <div class="profileItem-container">
+            <div class="user-profile-content">
+                <a asp-controller="Profile" asp-action="Overview" asp-route-id="@Model.UserId" class="@(currentView == "Overview" ? "active" : "")">Overview</a>
+                <a asp-controller="Profile" asp-action="Posts" asp-route-id="@Model.UserId" class="@(currentView == "Posts" ? "active" : "")">Posts</a>
+                <a asp-controller="Profile" asp-action="Comments" asp-route-id="@Model.UserId" class="@(currentView == "Comments" ? "active" : "")">Comments</a>
+            </div>
+        </div>
+
+        <hr class="profile-overview-hr">
+
+        <div class="profile-content">
+            <div>
+                @if (Model.Replies == null || !Model.Replies.Any())
+                {
+                    <div style="display:flex; justify-content:center;">
+                        <p style="color:White; font-size: 16px; font-weight: 600;">u/@Model.DisplayName hasn't commented yet.</p>
+                    </div>
+                }
+                else
+                {
+                    var reversedReplies = Model.Replies.Reverse();
+                    foreach (var reply in reversedReplies)
+                    {
+                        if (reply.Post != null)
+                        {
+                            <a asp-controller="Post" asp-action="Index" asp-route-id="@reply.Post.Id" class="profile-post-link-reply">
+                                <div class="profile-content-item-reply">
+                                    <div class="profile-content-margin-reply">
+                                        <div class="profile-header-reply">
+                                            <div class="profile-content-user-image-reply">
+                                                <img src="@Url.Content(Model.ProfileImageUrl)" alt="Profile Image" />
+                                            </div>
+                                            <div class="user-profile-details-reply">
+                                                <p>Showerthoughts/paradise</p>
+                                                &nbsp;
+                                                *
+                                                &nbsp;
+                                                <span class="time-difference-reply">@reply.Post.Title</span>
+                                            </div>
+                                        </div>
+                                        <div class="post-body-reply">
+                                            <div class="post-text-reply">
+
+                                                <div class="post-title-profile-reply">
+                                                    <p>u/@Model.DisplayName</p>
+                                                    &nbsp;
+                                                    <span data-timestamp="@reply.Created">commented</span>
+                                                </div>
+                                                <div class="post-content-profile-reply">
+                                                    <p>@reply.Content</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <hr class="profile-overview-hr">
+                        }
+                    }
+                }
+            </div>
+        </div>
+        </div>
+</main>
+
+<aside>
+    <div class="sidebar-profile-topic">
+        <div class="profile-banner">
+            <img src="@Url.Content(Model.BannerImageUrl)" alt=".">
+            @if (Model.IsOwner)
+            {
+                <ion-icon class="camera-icon" name="camera-outline" onclick="triggerBannerUpload()"></ion-icon>
+            }
+            <form id="bannerImageForm" asp-action="UploadBannerImage" asp-controller="Profile" enctype="multipart/form-data" method="post" style="display: none;">
+                <input type="file" id="bannerImageInput" name="bannerImage" accept="image/*" onchange="submitBannerForm()">
+            </form>
+        </div>
+        <div class="center-sidebar-content-profile">
+            <div class="sidebar-profile-title">
+                <p>u/@Model.DisplayName</p>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.UserDescription))
+            {
+                <div class="sidebar-profile-bioHr">
+                    <div class="sidebar-profile-bio">
+                        <p>@Model.UserDescription</p>
+                    </div>
+                    <hr class="sidebar-hr-bio">
+                </div>
+            }
+            <div style="display:flex; align-items: center; justify-content: space-between;">
+                <div class="sidebar-profile-minidescription">
+                    <p>@Model.UserRating</p>
+                    <span>Karma</span>
+                </div>
+                <div class="sidebar-profile-membersince">
+                    <p>@Model.MemberSince.ToString("d MMM, yyyy")</p>
+
+                    <span>Member Since</span>
+                </div>
+
+            </div>
+            <div style="display:flex; align-items: center; justify-content: space-between;">
+                <div class="sidebar-profile-postkarma">
+                    <p>@Model.UserPostRating</p>
+                    <span>Post Karma</span>
+                </div>
+                <div class="sidebar-profile-commentkarma">
+                    <p>@Model.UserCommentRating</p>
+                    <span>Comment Karma</span>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.IsOwner)
+        {
+            <hr style="width: 100%; max-width: 290px; height: 1px; color: white; background-color: #9aabe15c; border: none; margin-top: 1.25em;">
+
+            <div class="settings-margin">
+                <div class="sidebar-profile-settings">
+                    <p>SETTINGS</p>
+                </div>
+                <div class="sidebar-profile-description">
+                    <div class="user-image-sidebar">
+                        <img src="@Url.Content(Model.ProfileImageUrl)" alt="Profile Image" />
+                    </div>
+                    <div class="sidebar-user-settings">
+                        <p>Profile</p>
+                        <span>Customize your Profile</span>
+                    </div>
+                    <div class="sidebar-user-editprofile">
+                        <a asp-controller="Profile" asp-action="Settings" asp-route-id="@Model.UserId"><button>Edit Profile</button></a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</aside>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("myFollowersModal");
+        const btn = document.querySelector(".myFollowersLink");
+        const span = document.getElementsByClassName("close")[0];
+        const followersContent = document.getElementById("followersContent");
+
+        btn.onclick = async function (event) {
+            event.preventDefault();
+            try {
+                const response = await fetch('/Inboxes/LoadFollowers');
+                const content = await response.text();
+                followersContent.innerHTML = content;
+                modal.style.display = "block";
+            } catch (error) {
+                console.error('Error loading followers:', error);
+            }
+        };
+
+        span.onclick = function () {
+            modal.style.display = "none";
+        };
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+    });
+
+    async function followUser(userId) {
+        const response = await fetch('/api/Followers/follow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userId)
+        });
+        const result = await response.json();
+        if (result.success) {
+            document.getElementById('followUnfollowSection').innerHTML = '<button type="button" class="unfollow-btn" onclick="unfollowUser(\'' + userId + '\')">Unfollow</button>';
+            const followerCount = document.getElementById('followerCount');
+            followerCount.innerText = parseInt(followerCount.innerText) + 1;
+        }
+    }
+
+    async function unfollowUser(userId) {
+        const response = await fetch('/api/Followers/unfollow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userId)
+        });
+        const result = await response.json();
+        if (result.success) {
+            document.getElementById('followUnfollowSection').innerHTML = '<button type="button" class="follow-btn" onclick="followUser(\'' + userId + '\')">Follow</button>';
+            const followerCount = document.getElementById('followerCount');
+            followerCount.innerText = parseInt(followerCount.innerText) - 1;
+        }
+    }
+
+    async function updateFollowingCount(userId) {
+        try {
+            const response = await fetch(`/api/Followers/followingCount/${userId}`);
+            const result = await response.json();
+            const followingCount = document.getElementById('followingCount');
+            followingCount.innerText = result.count;
+        } catch (error) {
+            console.error('Error fetching following count:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const userId = '@Model.UserId';
+        updateFollowingCount(userId);
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        function getTimeDifference(createdTime) {
+            const now = new Date();
+            const diffMs = now - new Date(createdTime);
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            const diffMonths = Math.floor(diffDays / 30);
+
+            if (diffMins < 1) {
+                return 'just now';
+            } else if (diffMins < 60) {
+                return diffMins + ' min. ago';
+            } else if (diffHours < 24) {
+                return diffHours + ' hr. ago';
+            } else if (diffDays < 30) {
+                return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
+            } else {
+                return diffMonths + ' mo.' + (diffMonths > 1 ? 's' : '') + ' ago';
+            }
+        }
+
+        document.querySelectorAll('.post-title-profile-reply span').forEach(function (span) {
+            const timestamp = span.getAttribute('data-timestamp');
+            if (timestamp) {
+                span.textContent = 'commented ' + getTimeDifference(timestamp);
+            }
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        function getTimeDifference(createdTime) {
+            const now = new Date();
+            const diffMs = now - new Date(createdTime);
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            const diffMonths = Math.floor(diffDays / 30);
+
+            if (diffMins < 1) {
+                return 'just now';
+            } else if (diffMins < 60) {
+                return diffMins + ' min. ago';
+            } else if (diffHours < 24) {
+                return diffHours + ' hr. ago';
+            } else if (diffDays < 30) {
+                return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
+            } else {
+                return diffMonths + ' mo. ago';
+            }
+        }
+
+        document.querySelectorAll('.user-profile-details span').forEach(function (span) {
+            const timestamp = span.getAttribute('data-timestamp');
+            if (timestamp) {
+                span.textContent = 'posted ' + getTimeDifference(timestamp);
+            }
+        });
+    });
+
+
+    function triggerBannerUpload() {
+        document.getElementById('bannerImageInput').click();
+    }
+
+    function submitBannerForm() {
+        document.getElementById('bannerImageForm').submit();
+    }
+
+    function triggerProfileUpload() {
+        document.getElementById('profileImageInput').click();
+    }
+
+    function submitProfileForm() {
+        document.getElementById('profileImageForm').submit();
+    }
+
+</script>

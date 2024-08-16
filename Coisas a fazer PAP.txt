@@ -1,0 +1,65 @@
+User settings, permitir o user mudar os seus settings e tambem melhorar o seu design; 70% falta design
+
+mostrar a imagem do user no header. 100%
+
+melhorar dropdown do user
+
+esconder sidenav quando entrar na pagina do admin index
+
+verificações se o user errar a psse, ou dados no login-wrapper etc...
+
+mudar imagem no Profile 100%
+
+Adicionar um about me (descrição) no seu profile 100%
+
+Fazer um select do Paradise que onde o user quer postar.
+
+Adicionar tambem banners para o perfil; 100%
+
+Adicionar preloads 100%
+
+Acabar estilo do postreplies. done! 100%
+
+Create Post arrumar letras capitalizadas a cada palavra nova. done! 100%
+
+Adicionar Notificações quando um comentário for adicionado, um post for criado, forum editado, forum criado, mudanças no perfil feitas, Delete feito. done! 100%
+
+Fazer com que o owner do post possa o deletar e editar o post. done! 100%
+
+passar os dados do Profile para o User settings done! 100%
+
+Adicionar o PopUp do delete no Forum Topic e  adicionar no Forum Index delete e Edit. 50% done
+
+Mostrar no Profile os posts que o user postou, e os Paradises que ele está e também mostrar alguns dados dele. progresso 99% PS: so falta mostrar os Paradises.
+
+Fazer a página de mostrar todos os users da aplicação para o Admin. Progresso 100%
+
+Fazer mandar email se o user se esqueceu da senha.
+
+Likes e Dislikes nos posts e comentarios.
+
+
+
+
+Esconder o Createpost do header e so fazer aparecer quando estiver no forum topic, forum index e post index. 
+
+
+Ajustar margins para aparecer o conteudo melhor. e se calhar adicionar paddings aos posts items ou algo do genero. 100%
+
+
+
+Fazer posts so com texto, imagem não obrigatória.
+Editar melhor os posts do home, replies, views etc... 80%
+
+
+Arranjar estilo do Forum Topic. 100%
+
+
+mudar o nome de Forum para Paradises na side nav, também arranjar os selects quando o forum esta selecionado ficar em focus o item dele. 100%
+
+Funcionalidades:
+comentar num comentario de outro user;
+Fazer Joins de Forums;
+Notificações; 
+
+

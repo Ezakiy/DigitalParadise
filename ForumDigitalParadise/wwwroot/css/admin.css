@@ -1,0 +1,61 @@
+﻿.admin-panel {
+    width: 90%;
+    margin: 0 auto;
+}
+
+.admin-panel-header {
+    text-align: center;
+    margin-bottom: 2em;
+}
+
+.admin-users-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #2f4548;
+}
+
+    .admin-users-table th {
+        padding: 16px;
+        color: white;
+        text-align: center;
+        background-color: #171717;
+        font-weight: bold;
+    }
+
+    .admin-users-table td {
+        padding: 8px;
+        text-align: center;
+        color: white;
+        cursor: pointer;
+        transition: 0.1s;
+    }
+
+        .admin-users-table td:hover {
+            background-color: rgb(66, 66, 66, 0.40);
+        }
+
+
+.profile-image {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.btn {
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}

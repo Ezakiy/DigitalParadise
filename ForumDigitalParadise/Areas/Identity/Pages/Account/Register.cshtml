@@ -1,0 +1,62 @@
+﻿@page
+@model RegisterModel
+
+
+<div class="container-login-register">
+    <div class="page-wrapper-login-register">
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <p>Create a new account</p>
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="input-login">
+                <div class="input-wrapper">
+                    <input asp-for="Input.Username" class="form-control" autocomplete="off" aria-required="true" placeholder=" " maxlength="16" />
+                    <label asp-for="Input.Username" class="animated-label">Username</label>
+                    <span asp-validation-for="Input.Username" class="text-danger"></span>
+                </div>
+                <div class="input-wrapper">
+                    <input asp-for="Input.Email" class="form-control" autocomplete="off" aria-required="true" placeholder=" " maxlength="30" />
+                    <label asp-for="Input.Email" class="animated-label">Email</label>
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+                <div class="input-wrapper">
+                    <input asp-for="Input.Password" class="form-control" autocomplete="off" aria-required="true" placeholder=" " maxlength="16" />
+                    <label asp-for="Input.Password" class="animated-label">Password</label>
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+                <div class="input-wrapper">
+                    <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="off" aria-required="true" placeholder=" "maxlength="16" />
+                    <label asp-for="Input.ConfirmPassword" class="animated-label">Confirm Password</label>
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                </div>
+            </div>
+            <div>
+                <button id="registerSubmit" type="submit" class="login-button">Log in</button>
+            </div>
+            <div class="register-link-loginpage">
+                <p>
+                    Already have an account? <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Sign In</a>
+                </p>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // JavaScript to handle label animation
+        const inputs = document.querySelectorAll('.input-login input');
+
+        inputs.forEach(input => {
+            input.addEventListener('focus', function () {
+                input.parentNode.classList.add('focused');
+            });
+
+            input.addEventListener('blur', function () {
+                if (input.value === '') {
+                    input.parentNode.classList.remove('focused');
+                }
+            });
+        });
+    </script>
+}

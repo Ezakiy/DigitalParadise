@@ -1,0 +1,550 @@
+﻿<style>
+    button {
+        padding: 0;
+    }
+</style>
+
+@model ForumDigitalParadise.Models.ApplicationUser.ProfileModel
+@inject Microsoft.AspNetCore.Identity.UserManager<ForumDigitalParadise.Data.Models.ApplicationUser> UserManager
+@inject ForumDigitalParadise.Data.IFollower FollowerService
+
+@{
+    string currentView = ViewContext.RouteData.Values["action"]?.ToString();
+
+    Func<string, string> isActive = (string action) =>
+    {
+        return currentView == action ? "active" : "";
+    };
+}
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var currentUserId = currentUser?.Id;
+    var isFollowing = await FollowerService.IsFollowingAsync(currentUserId, Model.UserId);
+    var followerCount = await FollowerService.GetFollowersCountAsync(Model.UserId);
+    var followerText = followerCount == 1 ? "Follower" : "Followers";
+}
+
+<main style="margin-top: 0;">
+    <div class="profile-container">
+        <div class="page-wrapper-profile-details">
+            <div class="user-profile-info">
+                <div class="user-profile-image-overview">
+                    <img src="@Url.Content(Model.ProfileImageUrl)" alt="Profile Image" />
+                    @if (Model.IsOwner)
+                    {
+                        <ion-icon class="camera-icon-image" name="camera-outline" onclick="triggerProfileUpload()"></ion-icon>
+                        <form id="profileImageForm" asp-action="UploadProfileImage" asp-controller="Profile" enctype="multipart/form-data" method="post" style="display: none;">
+                            <input type="file" id="profileImageInput" name="file" accept="image/*" onchange="submitProfileForm()">
+                        </form>
+                    }
+                </div>
+                <div>
+                    <p>@Model.UserName</p>
+                    <span>u/@Model.DisplayName</span>
+                </div>
+            </div>
+            <div class="followers-userProfile">
+                
+                <div class="followers-following">
+                    @if (Model.IsOwner)
+                    {
+                        <div class="profile-followerCount">
+                            <a id="followerCount" class="myFollowersLink">@followerCount</a>
+                            <span>@followerText</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="display:flex; gap: 5px;">
+                            <p id="followerCount">@followerCount</p>
+                            <span>@followerText</span>
+                        </div>
+                    }
+
+                    @if (Model.IsOwner)
+                    {
+                        <div style="display:flex; gap: 5px;">
+                            <p id="followingCount">0</p>
+                            <span>Following</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="display:flex; gap: 5px;">
+                            <p id="followingCount">0</p>
+                            <span>Following</span>
+                        </div>
+                    }
+                </div>
+
+                @if (User.Identity.IsAuthenticated)
+                {
+                    @if (!Model.IsOwner)
+                    {
+
+
+                        <div id="followUnfollowSection">
+                            @if (isFollowing)
+                            {
+                                <button type="button" class="unfollow-btn" onclick="unfollowUser('@Model.UserId')">Unfollow</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="follow-btn" onclick="followUser('@Model.UserId')">Follow</button>
+                            }
+                        </div>
+                    }
+                }
+                
+            </div>
+        </div>
+
+        <div class="profileItem-container">
+            <div class="user-profile-content">
+                <a asp-controller="Profile" asp-action="Overview" asp-route-id="@Model.UserId" class="@(currentView == "Overview" ? "active" : "")">Overview</a>
+                <a asp-controller="Profile" asp-action="Posts" asp-route-id="@Model.UserId" class="@(currentView == "Posts" ? "active" : "")">Posts</a>
+                <a asp-controller="Profile" asp-action="Comments" asp-route-id="@Model.UserId" class="@(currentView == "Comments" ? "active" : "")">Comments</a>
+            </div>
+        </div>
+
+        <hr class="profile-overview-hr">
+
+        <div class="profile-content">
+            <div>
+                @if (Model.Posts == null || !Model.Posts.Any())
+                {
+                    <div style="display:flex; justify-content:center;">
+                        <p style="color:White; font-size: 16px; font-weight: 600;">u/@Model.DisplayName hasn't posted yet.</p>
+                    </div>
+                }
+                else
+                {
+                    @if (Model.Posts != null && Model.Posts.Any())
+                    {
+                        var reversedPosts = Model.Posts.Reverse();
+                        foreach (var post in reversedPosts)
+                        {
+                            @if (!string.IsNullOrEmpty(post.PostImageUrl))
+                            {
+                                <a asp-controller="Post" asp-action="Index" asp-route-id="@post.Id" class="profile-post-link">
+                                    <div class="profile-content-item">
+                                        <div class="profile-content-margin">
+                                            <div class="profile-header">
+                                                <div class="profile-content-user-image">
+                                                    <img src="@Url.Content(Model.ProfileImageUrl)" alt="Profile Image" />
+                                                </div>
+                                                <div class="user-profile-details">
+                                                    <p>u/@Model.DisplayName</p>
+                                                    &nbsp; * &nbsp;
+                                                    <span data-timestamp="@post.Created"></span>
+                                                </div>
+                                            </div>
+                                            <div class="post-body">
+                                                <div class="post-text">
+                                                    <div class="post-title-profile">
+                                                        <p>@post.Title</p>
+                                                    </div>
+                                                    <div class="post-content-profile">
+                                                        <p>@post.PostContent</p>
+                                                    </div>
+                                                </div>
+                                                <div class="post-image-content">
+                                                    <img src="@Url.Content(post.PostImageUrl)" alt="Post Image" />
+                                                </div>
+                                            </div>
+                                            <div class="postMeta-profile">
+                                                <div class="postReplies-separated">
+                                                    <span class="like-section">
+                                                        <button class="like-button" data-post-id="@post.Id" aria-label="Like">
+                                                            <ion-icon name="heart-outline" class="icon-like"></ion-icon>
+                                                        </button>
+                                                        <span class="like-count" data-post-id="@post.Id">@post.LikesCount</span>
+                                                    </span>
+                                                    <span class="homeindex-replies">
+                                                        <ion-icon class="homeindex-repliesicon" name="chatbox-outline"></ion-icon>
+                                                        &nbsp; @post.RepliesCount
+                                                    </span>
+                                                    <span class="homeindex-view">
+                                                        <ion-icon class="homeindex-viewicon" name="eye-outline"></ion-icon>
+                                                        &nbsp; @post.Views
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-controller="Post" asp-action="Index" asp-route-id="@post.Id" class="profile-post-link">
+                                    <div class="profile-content-item">
+                                        <div class="profile-content-margin">
+                                            <div class="profile-header">
+                                                <div class="profile-content-user-image">
+                                                    <img src="@Url.Content(Model.ProfileImageUrl)" alt="Profile Image" />
+                                                </div>
+                                                <div class="user-profile-details">
+                                                    <p>u/@Model.DisplayName</p>
+                                                    &nbsp; * &nbsp;
+                                                    <span data-timestamp="@post.Created"></span>
+                                                </div>
+                                            </div>
+                                            <div class="post-body">
+                                                <div class="post-text">
+                                                    <div class="post-title-profile">
+                                                        <p>@post.Title</p>
+                                                    </div>
+                                                    <div class="post-content-profile">
+                                                        <p>@post.PostContent</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @if (!Model.IsOwner)
+                                            {
+                                                <div class="postMeta-profile">
+                                                    <div class="postReplies-separated">
+                                                        <span class="like-section">
+                                                            <button class="like-button" data-post-id="@post.Id" aria-label="Like">
+                                                                <ion-icon name="heart-outline" class="icon-like"></ion-icon>
+                                                            </button>
+                                                            <span class="like-count" data-post-id="@post.Id">@post.LikesCount</span>
+                                                        </span>
+                                                        <span class="homeindex-replies">
+                                                            <ion-icon class="homeindex-repliesicon" name="chatbox-outline"></ion-icon>
+                                                            &nbsp; @post.RepliesCount
+                                                        </span>
+                                                        <span class="homeindex-view">
+                                                            <ion-icon class="homeindex-viewicon" name="eye-outline"></ion-icon>
+                                                            &nbsp; @post.Views
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </a>
+                            }
+                            @*Adicionar numero de views e comments*@
+                            @if (Model.IsOwner)
+                            {
+                                <div class="profile-post-views-info">
+                                    <p>Lifetime Performance</p>
+                                    <div class="profile-post-stats">
+                                        <div class="profile-post-views">
+                                            <p>@post.Views</p>
+                                            <div class="view-details">
+                                                <i class="far fa-eye"></i>
+                                                <span>Total Views</span>
+                                            </div>
+                                        </div>
+                                        <div class="profile-post-views">
+                                            <p>@post.RepliesCount</p>
+                                            <div class="view-details">
+                                                <i class="far fa-comment"></i>
+                                                <span>Comments</span>
+                                            </div>
+                                        </div>
+                                        <div class="profile-post-views">
+                                            <p data-post-id="@post.Id" class="lifetime-like-count">@post.LikesCount</p>
+                                            <div class="view-details">
+                                                <i class="far fa-heart"></i>
+                                                <span>Likes</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            <hr class="profile-overview-hr">
+                        }
+                    }
+                }
+            </div>
+        </div>
+        </div>
+</main>
+
+<aside>
+    <div class="sidebar-profile-topic">
+        <div class="profile-banner">
+            <img src="@Url.Content(Model.BannerImageUrl)" alt=".">
+            @if (Model.IsOwner)
+            {
+                <ion-icon class="camera-icon" name="camera-outline" onclick="triggerBannerUpload()"></ion-icon>
+            }
+            <form id="bannerImageForm" asp-action="UploadBannerImage" asp-controller="Profile" enctype="multipart/form-data" method="post" style="display: none;">
+                <input type="file" id="bannerImageInput" name="bannerImage" accept="image/*" onchange="submitBannerForm()">
+            </form>
+        </div>
+        <div class="center-sidebar-content-profile">
+            <div class="sidebar-profile-title">
+                <p>u/@Model.DisplayName</p>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.UserDescription))
+            {
+                <div class="sidebar-profile-bioHr">
+                    <div class="sidebar-profile-bio">
+                        <p>@Model.UserDescription</p>
+                    </div>
+                    <hr class="sidebar-hr-bio">
+                </div>
+            }
+            <div style="display:flex; align-items: center; justify-content: space-between;">
+                <div class="sidebar-profile-minidescription">
+                    <p>@Model.UserRating</p>
+                    <span>Karma</span>
+                </div>
+                <div class="sidebar-profile-membersince">
+                    <p>@Model.MemberSince.ToString("d MMM, yyyy")</p>
+
+                    <span>Member Since</span>
+                </div>
+
+            </div>
+            <div style="display:flex; align-items: center; justify-content: space-between;">
+                <div class="sidebar-profile-postkarma">
+                    <p>@Model.UserPostRating</p>
+                    <span>Post Karma</span>
+                </div>
+                <div class="sidebar-profile-commentkarma">
+                    <p>@Model.UserCommentRating</p>
+                    <span>Comment Karma</span>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.IsOwner)
+        {
+            <hr style="width: 100%; max-width: 290px; height: 1px; color: white; background-color: #9aabe15c; border: none; margin-top: 1.25em;">
+
+            <div class="settings-margin">
+                <div class="sidebar-profile-settings">
+                    <p>SETTINGS</p>
+                </div>
+                <div class="sidebar-profile-description">
+                    <div class="user-image-sidebar">
+                        <img src="@Url.Content(Model.ProfileImageUrl)" alt="Profile Image" />
+                    </div>
+                    <div class="sidebar-user-settings">
+                        <p>Profile</p>
+                        <span>Customize your Profile</span>
+                    </div>
+                    <div class="sidebar-user-editprofile">
+                        <a asp-controller="Profile" asp-action="Settings" asp-route-id="@Model.UserId"><button>Edit Profile</button></a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</aside>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('.like-button').forEach(button => {
+            button.addEventListener('click', async function (event) {
+                event.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                const likeCountSpan = document.querySelector(`.like-count[data-post-id="${postId}"]`);
+                const icon = this.querySelector('.icon-like');
+
+                const isLiked = icon.name === 'heart';
+
+                const response = await fetch(`/api/postlike/${postId}/${isLiked ? 'unlike' : 'like'}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    if (isLiked) {
+                        icon.name = 'heart-outline';
+                        likeCountSpan.textContent = parseInt(likeCountSpan.textContent) - 1;
+                    } else {
+                        icon.name = 'heart';
+                        likeCountSpan.textContent = parseInt(likeCountSpan.textContent) + 1;
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.like-count').forEach(async (span) => {
+            const postId = span.getAttribute('data-post-id');
+            const response = await fetch(`/api/postlike/${postId}/likes`);
+            if (response.ok) {
+                const count = await response.json();
+                span.textContent = count;
+            }
+
+            const likeResponse = await fetch(`/api/postlike/${postId}/islikedbyuser`);
+            if (likeResponse.ok) {
+                const isLiked = await likeResponse.json();
+                const likeButton = document.querySelector(`.like-button[data-post-id="${postId}"] .icon-like`);
+                if (isLiked) {
+                    likeButton.name = 'heart';
+                } else {
+                    likeButton.name = 'heart-outline';
+                }
+            }
+        });
+
+            document.querySelectorAll('.lifetime-like-count').forEach(async (span) => {
+                const postId = span.getAttribute('data-post-id');
+                const response = await fetch(`/api/postlike/${postId}/likes`);
+                if (response.ok) {
+                    const count = await response.json();
+                    span.textContent = count;
+                }
+            });
+
+        const modal = document.getElementById("myFollowersModal");
+        const btn = document.querySelector(".myFollowersLink");
+        const span = document.getElementsByClassName("close")[0];
+        const followersContent = document.getElementById("followersContent");
+
+        btn.onclick = async function (event) {
+            event.preventDefault();
+            try {
+                const response = await fetch('/Inboxes/LoadFollowers');
+                const content = await response.text();
+                followersContent.innerHTML = content;
+                modal.style.display = "block";
+            } catch (error) {
+                console.error('Error loading followers:', error);
+            }
+        };
+
+        span.onclick = function () {
+            modal.style.display = "none";
+        };
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+    });
+
+    async function followUser(userId) {
+        const response = await fetch('/api/Followers/follow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userId)
+        });
+        const result = await response.json();
+        if (result.success) {
+            document.getElementById('followUnfollowSection').innerHTML = '<button type="button" class="unfollow-btn" onclick="unfollowUser(\'' + userId + '\')">Unfollow</button>';
+            const followerCount = document.getElementById('followerCount');
+            followerCount.innerText = parseInt(followerCount.innerText) + 1;
+        }
+    }
+
+    async function unfollowUser(userId) {
+        const response = await fetch('/api/Followers/unfollow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userId)
+        });
+        const result = await response.json();
+        if (result.success) {
+            document.getElementById('followUnfollowSection').innerHTML = '<button type="button" class="follow-btn" onclick="followUser(\'' + userId + '\')">Follow</button>';
+            const followerCount = document.getElementById('followerCount');
+            followerCount.innerText = parseInt(followerCount.innerText) - 1;
+        }
+    }
+
+    async function updateFollowingCount(userId) {
+        try {
+            const response = await fetch(`/api/Followers/followingCount/${userId}`);
+            const result = await response.json();
+            const followingCount = document.getElementById('followingCount');
+            followingCount.innerText = result.count;
+        } catch (error) {
+            console.error('Error fetching following count:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const userId = '@Model.UserId';
+        updateFollowingCount(userId);
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        function getTimeDifference(createdTime) {
+            const now = new Date();
+            const diffMs = now - new Date(createdTime);
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            const diffMonths = Math.floor(diffDays / 30);
+
+            if (diffMins < 1) {
+                return 'just now';
+            } else if (diffMins < 60) {
+                return diffMins + ' min. ago';
+            } else if (diffHours < 24) {
+                return diffHours + ' hr. ago';
+            } else if (diffDays < 30) {
+                return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
+            } else {
+                return diffMonths + ' mo.' + (diffMonths > 1 ? 's' : '') + ' ago';
+            }
+        }
+
+        document.querySelectorAll('.post-title-profile-reply span').forEach(function (span) {
+            const timestamp = span.getAttribute('data-timestamp');
+            if (timestamp) {
+                span.textContent = 'commented ' + getTimeDifference(timestamp);
+            }
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        function getTimeDifference(createdTime) {
+            const now = new Date();
+            const diffMs = now - new Date(createdTime);
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            const diffMonths = Math.floor(diffDays / 30);
+
+            if (diffMins < 1) {
+                return 'just now';
+            } else if (diffMins < 60) {
+                return diffMins + ' min. ago';
+            } else if (diffHours < 24) {
+                return diffHours + ' hr. ago';
+            } else if (diffDays < 30) {
+                return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
+            } else {
+                return diffMonths + ' mo. ago';
+            }
+        }
+
+        document.querySelectorAll('.user-profile-details span').forEach(function (span) {
+            const timestamp = span.getAttribute('data-timestamp');
+            if (timestamp) {
+                span.textContent = 'posted ' + getTimeDifference(timestamp);
+            }
+        });
+    });
+
+
+    function triggerBannerUpload() {
+        document.getElementById('bannerImageInput').click();
+    }
+
+    function submitBannerForm() {
+        document.getElementById('bannerImageForm').submit();
+    }
+
+    function triggerProfileUpload() {
+        document.getElementById('profileImageInput').click();
+    }
+
+    function submitProfileForm() {
+        document.getElementById('profileImageForm').submit();
+    }
+
+</script>

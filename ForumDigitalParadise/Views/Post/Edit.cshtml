@@ -1,0 +1,236 @@
+﻿@model ForumDigitalParadise.Models.Post.EditPostModel
+
+<div class="section" style="margin-top: 0;">
+    <div class="container-post-submit">
+        <div class="return-icon-fixed" onclick="goBack()">
+            <div class="headingBtn">
+                <ion-icon name="arrow-back-outline" class="go-back-icon"></ion-icon>
+            </div>
+        </div>
+        <div class="forumtitle-left">
+            <span style="font-size: 20px; color:white; font-weight: 600;">Edit Post</span>
+        </div>
+        <form asp-action="Edit" method="post" id="editForumForm" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+            <div class="title edit-forum-title">
+                <div class="placeholder-container">
+                    <input asp-for="Title" type="text" name="Title" id="titleInput" placeholder="" maxlength="150" autocomplete="off" required>
+                    <label asp-for="Title" class="placeholder">Title <span class="required-indicator">*</span></label>
+                </div>
+                <ion-icon class="warning-indicator" name="alert-circle-outline"></ion-icon>
+                <ion-icon class="check-indicator" name="checkmark-outline"></ion-icon>
+            </div>
+
+            <div class="title-right-side">
+                <span id="charCount">0/150</span>
+            </div>
+
+            <div class="row-postcreate">
+                <div class="col">
+                    <div class="first box">
+                        <button type="button" onclick="f2(this)" class="bold-icon">
+                            <i class="fa-solid fa-bold" style="font-size:14px;"></i>
+                        </button>
+                    </div>
+                    <div class="second box">
+                        <button class="dropdown-btn-post" type="button">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                        <div class="dropdown-menu-image" id="dropdownMenuImage">
+                            <ul>
+                                <li>
+                                    <ion-icon class="image-icon" name="image-outline"></ion-icon>
+                                    <label class="btn-file">
+                                        Image <input type="file" name="file" style="display:none" id="fileInput" accept=".png, .jpg, .jpeg" onchange="displayImageContent(this)">
+                                    </label>
+                                    <span id="fileName"></span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <textarea asp-for="Content" id="textarea" placeholder="Body" required>@Model.Content</textarea>
+                    <div class="image-preview-container" id="imagePreviewForum" style="display: @(string.IsNullOrEmpty(Model.PostImageUrl) ? "none" : "block"); width: 600px; height: 275px; border-radius: 20px;">
+                        <div class="icon-remove-image-div">
+                            <ion-icon class="icon-remove-image" name="close-outline" onclick="removeImage()"></ion-icon>
+                        </div>
+                        <img id="imagePreview" src="@Url.Content(Model.PostImageUrl)" />
+                    </div>
+                </div>
+            </div>
+            <div class="submitbtn">
+                <button type="button" id="cancelPostBtn" class="btn-submitCancel" onclick="cancelEdit()">Cancel</button>
+                <button type="submit" id="submitPostBtn" class="btn-submitForumEdit">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+
+    function displayImageContent(input) {
+        const file = input.files[0];
+        const fileName = document.getElementById('fileName');
+        const validExtensions = ['image/jpeg', 'image/png'];
+
+        if (file) {
+            if (!validExtensions.includes(file.type)) {
+                alert('Please select a valid image file (PNG or JPG).');
+                input.value = ''; 
+                fileName.textContent = '';
+            } else {
+                fileName.textContent = file.name;
+            }
+        }
+    }
+
+    function goBack() {
+        window.history.back();
+    }
+
+    const imageDropdownBtn = document.querySelector('.dropdown-btn-post');
+    const imageDropdownMenu = document.getElementById("dropdownMenuImage");
+
+    imageDropdownBtn.addEventListener('click', (event) => {
+        imageDropdownMenu.classList.toggle('active');
+        imageDropdownBtn.classList.toggle('focused');
+        event.stopPropagation();
+    });
+
+    document.body.addEventListener('click', (event) => {
+        if (!imageDropdownMenu.contains(event.target) && !imageDropdownBtn.contains(event.target)) {
+            imageDropdownMenu.classList.remove('active');
+            imageDropdownBtn.classList.remove('focused');
+        }
+    });
+
+    function hideImageDropdownMenu() {
+        const imageDropdownMenu = document.getElementById("dropdownMenuImage");
+        const imageDropdownBtn = document.querySelector('.dropdown-btn-post');
+
+        imageDropdownMenu.classList.remove('active');
+        imageDropdownBtn.classList.remove('focused');
+    }
+
+    document.getElementById("fileInput").addEventListener("change", function () {
+        displayImageContent(this);
+        hideImageDropdownMenu();
+    });
+
+    function displayImageContent(input) {
+        const imagePreviewContainer = document.querySelector('.image-preview-container');
+        const imagePreview = imagePreviewContainer.querySelector('img');
+
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                imagePreview.setAttribute('src', e.target.result);
+                imagePreviewContainer.style.display = 'block';
+                checkFieldsNotEmpty();
+            }
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    document.getElementById("fileInput").addEventListener("change", function () {
+        displayImageContent(this);
+    });
+
+    function clearImagePreview() {
+        const imagePreviewContainer = document.querySelector('.image-preview-container');
+        const imagePreview = document.getElementById('imagePreview');
+        const fileInput = document.getElementById('fileInput');
+
+        imagePreviewContainer.style.display = 'none';
+        imagePreview.removeAttribute('src');
+        fileInput.value = '';
+        checkFieldsNotEmpty();
+    }
+
+    function removeImage() {
+        clearImagePreview();
+    }
+
+    function cancelEdit() {
+        document.getElementById('editForumForm').reset();
+
+        updateTitleCharCount();
+        updateDescriptionCharCount();
+        updateCheckIndicator();
+
+        checkFieldsNotEmpty();
+    }
+
+    function updateTitleCharCount() {
+        const titleInputEdit = document.getElementById('titleInput');
+        const charCountElement = document.getElementById('charCount');
+        const checkIndicator = document.querySelector('.check-indicator');
+        let title = titleInputEdit.value;
+
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+
+        const currentLength = title.length;
+        charCountElement.textContent = `${currentLength}/150`;
+
+        titleInputEdit.value = title;
+
+        if (currentLength > 0) {
+            checkIndicator.style.display = 'block';
+        } else {
+            checkIndicator.style.display = 'none';
+        }
+
+        checkFieldsNotEmpty();
+    }
+
+    function updateDescriptionCharCount() {
+        const descriptionInputEdit = document.getElementById('textarea');
+        const charCountElement = document.getElementById('descriptionCharCount');
+        let description = descriptionInputEdit.value;
+
+        description = description.charAt(0).toUpperCase() + description.slice(1);
+
+        const currentLength = description.length;
+        charCountElement.textContent = `${currentLength}/500`;
+
+        descriptionInputEdit.value = description;
+
+        checkFieldsNotEmpty();
+    }
+
+    function updateCheckIndicator() {
+        const titleInputEdit = document.getElementById('titleInput');
+        const checkIndicator = document.querySelector('.check-indicator');
+
+        if (titleInputEdit.value.trim() !== '') {
+            checkIndicator.style.display = 'block';
+        } else {
+            checkIndicator.style.display = 'none';
+        }
+    }
+
+    function checkFieldsNotEmpty() {
+        const titleInputEdit = document.getElementById('titleInput').value;
+        const descriptionInputEdit = document.getElementById('textarea').value;
+        const submitButton = document.getElementById('submitPostBtn');
+
+        if (titleInputEdit.trim() !== '' && descriptionInputEdit.trim() !== '') {
+            submitButton.disabled = false;
+        } else {
+            submitButton.disabled = true;
+        }
+    }
+
+    document.getElementById('titleInput').addEventListener('input', () => {
+        updateTitleCharCount();
+        updateCheckIndicator();
+    });
+    document.getElementById('textarea').addEventListener('input', updateDescriptionCharCount);
+
+    updateTitleCharCount();
+    updateDescriptionCharCount();
+    updateCheckIndicator();
+    checkFieldsNotEmpty();
+</script>

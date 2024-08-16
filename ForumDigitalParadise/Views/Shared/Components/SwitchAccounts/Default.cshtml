@@ -1,0 +1,117 @@
+﻿<div id="overlayUserAccounts" class="overlay-useraccounts"></div>
+
+<!-- Popup -->
+<div id="switchAccountsPopup" class="switchaccpopup">
+    <div class="popup-content">
+        <h2 style="color: white;">Switch Accounts</h2>
+        <button class="close-button" onclick="closePopup()">&times;</button>
+        <form id="addAccountForm" onsubmit="return addAccount()">
+            <div class="submitAccount-div">
+                <input type="text" name="newAccountUsername" id="newAccountUsername" placeholder="Enter new account username" required>
+                <input type="password" name="newAccountPassword" id="newAccountPassword" placeholder="Enter new account password" required>
+                <button type="submit">Add Account</button>
+            </div>
+        </form>
+        <!-- List of added accounts -->
+        <div id="accountList" class="userlists"></div>
+    </div>
+</div>
+
+
+
+
+<script>
+    document.getElementById('switchAccountsLink').onclick = function () {
+        document.getElementById('overlayUserAccounts').style.display = 'block';
+        document.getElementById('switchAccountsPopup').style.display = 'block';
+        loadAccounts();
+    };
+
+    function closePopup() {
+        document.getElementById('overlayUserAccounts').style.display = 'none';
+        document.getElementById('switchAccountsPopup').style.display = 'none';
+    }
+
+    async function loadAccounts() {
+        try {
+            const response = await fetch('/Account/GetUserAccounts');
+            if (response.ok) {
+                const accounts = await response.json();
+                const accountList = document.getElementById('accountList');
+                accountList.innerHTML = '';
+
+                accounts.forEach(account => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = account.username;
+                    listItem.setAttribute('data-userid', account.id);
+                    listItem.onclick = switchAccount;
+                    accountList.appendChild(listItem);
+                });
+            } else {
+                console.error('Failed to load accounts:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching accounts:', error);
+        }
+    }
+
+    async function addAccount() {
+        const form = document.getElementById('addAccountForm');
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/Account/AddAccount', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    loadAccounts();
+                    form.reset();
+                } else {
+                    alert(`Error: ${result.error}`);
+                }
+            } else {
+                alert('Network error occurred.');
+            }
+        } catch (error) {
+            console.error('Error adding account:', error);
+            alert('An error occurred while adding the account.');
+        }
+
+        return false;
+    }
+
+    async function switchAccount() {
+        const userId = this.getAttribute('data-userid');
+        try {
+            const response = await fetch(`/Account/SwitchAccount?accountId=${userId}`);
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    alert('Switched account successfully.');
+                    closePopup();
+                } else {
+                    alert('Failed to switch account: ' + result.error);
+                }
+            } else {
+                alert('Failed to switch account: Network error.');
+            }
+        } catch (error) {
+            console.error('Error switching account:', error);
+        }
+    }
+
+    window.onclick = function (event) {
+        const overlay = document.getElementById('overlayUserAccounts');
+        const popup = document.getElementById('switchAccountsPopup');
+        const popupContent = document.querySelector('.popup-content');
+
+        if (event.target === overlay) {
+            closePopup();
+        }
+    }
+
+</script>

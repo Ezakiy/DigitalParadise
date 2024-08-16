@@ -1,0 +1,319 @@
+﻿@model ForumDigitalParadise.Models.Forum.AddForumModel
+
+<div class="section">
+    <div class="container-post-submit">
+        <div class="return-icon-fixed" onclick="goBack()">
+            <div class="headingBtn">
+                <ion-icon name="arrow-back-outline" class="go-back-icon"></ion-icon>
+            </div>
+        </div>
+        <div class="forumtitle-left">
+            <span style="font-size: 22px; color:white;">Create new Forum Topic</span>
+        </div>
+        <form asp-action="AddForum" method="post" id="createForumForm" enctype="multipart/form-data">
+
+            <div class="title">
+                <div class="placeholder-container">
+                    <input asp-for="Title" type="text" name="Title" id="titleInput" placeholder="" maxlength="100" autocomplete="off" oninput="updateTitleCharCount()" onblur="checkTitleInput()">
+                    <label asp-for="Title" class="placeholder">Title <span class="required-indicator">*</span></label>
+                </div>
+                <ion-icon class="warning-indicator" id="titleWarningIndicator" name="alert-circle-outline"></ion-icon>
+                <ion-icon class="check-indicator" id="titleCheckIndicator" name="checkmark-outline"></ion-icon>
+            </div>
+
+            <div class="title-right-side">
+                <span id="charCount">0/100</span>
+            </div>
+            <div class="title-left-side">
+                <span class="required-text">Please fill out this field.</span>
+            </div>
+
+            <div class="mini-description">
+                <span class="mini-required-indicator">*</span>
+                <textarea asp-for="MiniDescription" name="MiniDescription" id="miniDescriptiontextarea" placeholder="Mini Description" maxlength="200" autocomplete="off" oninput="updateMiniDescriptionCharCount()" onblur="checkMiniDescriptionInput()"></textarea>
+            </div>
+
+            <div class="title-right-side">
+                <span id="miniCharCount">0/200</span>
+            </div>
+            <div class="title-left-side">
+                <span class="mini-required-text">Please fill out this field.</span>
+            </div>
+
+
+            <div class="row-postcreate">
+                <div class="col">
+                    <div class="first box">
+                        <button type="button" onclick="f2(this)" class="bold-icon">
+                            <i class="fa-solid fa-bold" style="font-size:14px;"></i>
+                        </button>
+                    </div>
+                    <div class="second box">
+                        <button class="dropdown-btn-post" type="button">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                        <span class="required-indicator">*</span>
+                        <div class="dropdown-menu-image" id="dropdownMenuImage">
+                            <ul>
+                                <li>
+                                    <ion-icon class="image-icon" name="image-outline"></ion-icon>
+                                    <ion-icon class="warning-indicator" name="alert-circle-outline"></ion-icon>
+                                    <label class="btn-file">
+                                        Image <input type="file" name="imageUploadForum" style="display:none" id="fileInput" accept=".png, .jpg, .jpeg" onchange="displayImageForum(this)" required>
+                                    </label>
+                                    <span id="fileName"></span>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
+
+                    <textarea asp-for="Description" id="textarea" placeholder="Body" required></textarea>
+
+                    <div class="image-preview-container" id="imagePreviewForum" style="display: none; width: 600px; height: 400px;">
+                        <div class="icon-remove-image-div">
+                            <ion-icon class="icon-remove-image" name="close-outline" onclick="removeImage()"></ion-icon>
+                        </div>
+                        <img />
+                    </div>
+                </div>
+            </div>
+
+            <div class="submitbtn">
+                <button type="button" id="cancelPostBtn" class="btn-submitCancel">Cancel</button>
+                <button type="submit" id="submitPostBtn" class="btn-submitPost" disabled>Post</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    function displayImageForum(input) {
+        const file = input.files[0];
+        const fileName = document.getElementById('fileName');
+        const validExtensions = ['image/jpeg', 'image/png'];
+
+        if (file) {
+            if (!validExtensions.includes(file.type)) {
+                alert('Please select a valid image file (PNG or JPG).');
+                input.value = ''; 
+                fileName.textContent = ''; 
+            } else {
+                fileName.textContent = file.name;
+            }
+        }
+    }
+
+
+    function goBack() {
+        window.history.back();
+    }
+
+    const imageDropdownBtn = document.querySelector('.dropdown-btn-post');
+    const imageDropdownMenu = document.getElementById("dropdownMenuImage");
+
+    imageDropdownBtn.addEventListener('click', (event) => {
+        imageDropdownMenu.classList.toggle('active');
+        imageDropdownBtn.classList.toggle('focused');
+        event.stopPropagation();
+    });
+
+    document.body.addEventListener('click', (event) => {
+        if (!imageDropdownMenu.contains(event.target) && !imageDropdownBtn.contains(event.target)) {
+            hideImageDropdownMenu();
+        }
+    });
+
+    function hideImageDropdownMenu() {
+        const imageDropdownMenu = document.getElementById("dropdownMenuImage");
+        const imageDropdownBtn = document.querySelector('.dropdown-btn-post');
+
+        imageDropdownMenu.classList.remove('active');
+        imageDropdownBtn.classList.remove('focused');
+    }
+
+    document.getElementById("fileInput").addEventListener("change", function () {
+        displayImageForum(this);
+        hideImageDropdownMenu();
+    });
+
+    function displayImageForum(input) {
+        const imagePreviewForum = document.getElementById('imagePreviewForum');
+        const imgElement = imagePreviewForum.querySelector('img');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                imgElement.setAttribute('src', e.target.result);
+                imagePreviewForum.style.display = 'block';
+            }
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeImage() {
+        const imagePreviewForum = document.getElementById('imagePreviewForum');
+        const fileInput = document.getElementById('fileInput');
+        const imgElement = imagePreviewForum.querySelector('img');
+
+        imgElement.removeAttribute('src');
+        imagePreviewForum.style.display = 'none';
+        fileInput.value = '';
+        checkFields();
+    }
+
+    function updateTitleCharCount() {
+        const titleInput = document.getElementById('titleInput');
+        const charCountElement = document.getElementById('charCount');
+        const currentLength = titleInput.value.length;
+        charCountElement.textContent = `${currentLength}/100`;
+    }
+
+    function updateMiniDescriptionCharCount() {
+        const miniDescriptionInput = document.getElementById('miniDescriptiontextarea');
+        const charCountElement = document.getElementById('miniCharCount');
+        const currentLength = miniDescriptionInput.value.length;
+        charCountElement.textContent = `${currentLength}/200`;
+    }
+
+    function checkFields() {
+        const textarea = document.getElementById("textarea");
+        const fileInput = document.getElementById("fileInput");
+        const titleInput = document.querySelector(".title input");
+        const submitPostBtn = document.getElementById("submitPostBtn");
+        const miniDescriptionInput = document.getElementById('miniDescriptiontextarea').value.trim();
+
+        const isTextareaFilled = textarea.value.trim() !== "";
+        const isFileInputFilled = fileInput.files.length > 0;
+        const isTitleInputFilled = titleInput.value.trim() !== "";
+        const isMiniTextareaFilled = miniDescriptionInput.trim() !== "";
+
+        if (!isTextareaFilled || !isFileInputFilled || !isTitleInputFilled || !isMiniTextareaFilled) {
+            submitPostBtn.disabled = true;
+        } else {
+            submitPostBtn.disabled = false;
+        }
+    }
+
+    function clearForumImagePreview() {
+        const imagePreviewForum = document.getElementById('imagePreviewForum');
+        const fileInput = document.getElementById('fileInput');
+        if (imagePreviewForum) {
+            const imgElement = imagePreviewForum.querySelector('img');
+            if (imgElement) {
+                imgElement.removeAttribute('src');
+            }
+            imagePreviewForum.style.display = 'none';
+            if (fileInput) {
+                fileInput.value = '';
+            }
+        }
+    }
+
+    function clearMiniDescription() {
+        const miniDescriptionTextarea = document.getElementById('miniDescriptiontextarea');
+        if (miniDescriptionTextarea) {
+            miniDescriptionTextarea.value = '';
+            updateMiniDescriptionCharCount();
+        }
+    }
+
+    function clearDescription() {
+        const descriptionTextarea = document.getElementById('textarea');
+        if (descriptionTextarea) {
+            descriptionTextarea.value = '';
+        }
+    }
+
+    function clearTitle() {
+        const titleInput = document.getElementById('titleInput');
+        if (titleInput) {
+            titleInput.value = '';
+            updateTitleCharCount();
+        }
+    }
+
+    function checkTitleInput() {
+        const titleInput = document.getElementById('titleInput');
+        const titleWarningIndicator = document.getElementById('titleWarningIndicator');
+        const titleCheckIndicator = document.getElementById('titleCheckIndicator');
+
+        if (titleInput.value.trim() === "") {
+            titleWarningIndicator.style.display = 'block';
+            titleCheckIndicator.style.display = 'none';
+        } else {
+            titleWarningIndicator.style.display = 'none';
+            titleCheckIndicator.style.display = 'block';
+        }
+    }
+
+    function checkMiniDescriptionInput() {
+        const miniDescriptionInput = document.getElementById('miniDescriptiontextarea');
+        const miniDescriptionPlaceholder = document.querySelector('.mini-description .placeholder');
+        const miniDescriptionWarningIndicator = document.querySelector('.mini-description .warning-indicator');
+        const miniDescriptionCheckIndicator = document.querySelector('.mini-description .check-indicator');
+
+        if (miniDescriptionInput.value.trim() === "") {
+            miniDescriptionWarningIndicator.style.display = 'block';
+            miniDescriptionCheckIndicator.style.display = 'none';
+            miniDescriptionPlaceholder.classList.add('invalid');
+        } else {
+            miniDescriptionWarningIndicator.style.display = 'none';
+            miniDescriptionCheckIndicator.style.display = 'block';
+            miniDescriptionPlaceholder.classList.remove('invalid');
+        }
+    }
+
+    const cancelPostBtn = document.getElementById("cancelPostBtn");
+    if (cancelPostBtn) {
+        cancelPostBtn.addEventListener("click", function () {
+            clearMiniDescription();
+            clearForumImagePreview();
+            clearDescription();
+            clearTitle();
+            const submitPostBtn = document.getElementById("submitPostBtn");
+            if (submitPostBtn) {
+                submitPostBtn.disabled = true;
+            }
+            const titleWarningIndicator = document.getElementById('titleWarningIndicator');
+            const titleCheckIndicator = document.getElementById('titleCheckIndicator');
+            const miniDescriptionWarningIndicator = document.querySelector('.mini-description .warning-indicator');
+            const miniDescriptionCheckIndicator = document.querySelector('.mini-description .check-indicator');
+            titleWarningIndicator.style.display = 'none';
+            titleCheckIndicator.style.display = 'none';
+            miniDescriptionWarningIndicator.style.display = 'none';
+            miniDescriptionCheckIndicator.style.display = 'none';
+        });
+    }
+
+    function capitalizeFirstLetter(inputId) {
+        const inputElement = document.getElementById(inputId);
+        if (inputElement) {
+            inputElement.addEventListener('input', function () {
+                const text = this.value;
+                const capitalizedText = text.charAt(0).toUpperCase() + text.slice(1);
+                this.value = capitalizedText;
+            });
+        }
+    }
+
+    document.getElementById("textarea").addEventListener("input", checkFields);
+    document.getElementById("fileInput").addEventListener("change", checkFields);
+    document.querySelector(".title input").addEventListener("input", function () {
+        checkFields();
+        updateTitleCharCount();
+        checkTitleInput();
+    });
+    document.getElementById("miniDescriptiontextarea").addEventListener("input", function () {
+        checkFields();
+        updateMiniDescriptionCharCount();
+        checkMiniDescriptionInput();
+    });
+    document.getElementById('textarea').addEventListener('input', () => capitalizeFirstLetter('textarea'));
+    document.getElementById('titleInput').addEventListener('input', () => capitalizeFirstLetter('titleInput'));
+    document.getElementById('miniDescriptiontextarea').addEventListener('input', () => capitalizeFirstLetter('miniDescriptiontextarea'));
+
+    checkFields();
+</script>

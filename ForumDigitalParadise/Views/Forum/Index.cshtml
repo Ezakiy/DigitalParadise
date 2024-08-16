@@ -1,0 +1,161 @@
+﻿@model ForumDigitalParadise.Models.Forum.ForumIndexModel
+
+<div class="forum-wrapper" style="margin-top: 0;">
+    <div class="container forum-content">
+        <div class="sectionHeader-index">
+            <div class="sectionHeading-index">
+                <span>Paradises</span>
+            </div>
+            <div class="sectionDescription-index">
+                <p>Welcome to our Paradise page!</p>
+                <div class="desc-p">
+                    <p>
+                        Embark on a Journey of Knowledge: Welcome to DigitalParadise's Paradises—a sanctuary for knowledge seekers and tech aficionados alike. Immerse yourself in dynamic discussions, elevate your understanding, and embark on a quest for digital enlightenment.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <hr style="width: 100%; max-width: 750px; height: 1px; color: white; background-color: #9aabe15c; border: none;">
+
+        <div class="frontPageContent-forum">
+            @foreach (var forum in Model.ForumList)
+            {
+                <a asp-controller="Forum" asp-action="Topic" asp-route-id="@forum.Id" class="forum-link">
+                    <div class="forum-item">
+                        <div class="forum-content-wrapper">
+                            <div class="forum-image">
+                                <img src="@Url.Content(forum.ForumImageUrl)" alt="Forum Image" class="img-fluid rounded-circle">
+                            </div>
+                            <div class="forum-details-index-wrapper">
+                                <div class="forum-details-index">
+                                    <div class="forum-title">
+                                        @forum.Name
+                                    </div>
+
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <div class="dropdown-forumIndex" style="">
+                                            <button class="dropdown-btn-forum" type="button" aria-haspopup="true" aria-expanded="false">
+                                                <ion-icon class="horizontal-forum-menu" name="ellipsis-horizontal-outline"></ion-icon>
+                                            </button>
+                                            <div class="dropdown-menu-forum" style="width: 150px;" aria-labelledby="dropdownMenuButton">
+                                                <button type="button" class="dropdown-item-forum openPopup" data-popup-id="popup-@forum.Id">
+                                                    <ion-icon name="trash" class="iconDelete-forum"></ion-icon> Delete Post
+                                                </button>
+                                                <button type="button" class="dropdown-item-forum editPost" data-url="@Url.Action("Edit", "Forum", new { id = forum.Id })">
+                                                    <ion-icon class="iconEdit-forum" name="color-wand-outline"></ion-icon> Edit Post
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="popup-show" id="popup-@forum.Id" style="display:none;">
+                                            <div class="popup-content">
+                                                <p>Are you sure you want to perform this action?</p>
+                                                <span>This action will permanently remove the item and cannot be undone.</span>
+                                                <div class="popup-content-buttons">
+                                                    <button type="button" class="cancelbtn-popup">Cancel</button>
+                                                    <form asp-controller="Forum" asp-action="Delete" asp-route-id="@forum.Id" method="post" class="delete-form">
+                                                        <button type="submit" class="submitbtn-popup">Confirm</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="forum-description">
+                                        @forum.Description
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                <hr style="width: 100%; max-width: 750px; height: 1px; color: white; background-color: #9aabe15c; border: none;">
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.dropdown-btn-forum').forEach(function (dropdownBtn) {
+            dropdownBtn.addEventListener('click', function (event) {
+                event.stopPropagation();
+                event.preventDefault();
+                const dropdownMenu = this.nextElementSibling;
+                toggleDropdown(dropdownMenu);
+                closeOtherDropdowns(dropdownMenu);
+            });
+        });
+
+        document.addEventListener('click', function (event) {
+            document.querySelectorAll('.dropdown-menu-forum').forEach(function (dropdownMenu) {
+                if (!dropdownMenu.previousElementSibling.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.classList.remove('active');
+                    dropdownMenu.style.display = 'none';
+                }
+            });
+        });
+
+        document.querySelectorAll('.editPost').forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+                window.location.href = this.getAttribute('data-url');
+            });
+        });
+
+        document.querySelectorAll(".openPopup").forEach(function (openButton) {
+            openButton.addEventListener("click", function (event) {
+                event.stopPropagation();
+                event.preventDefault();
+                const popupId = this.getAttribute('data-popup-id');
+                const popup = document.getElementById(popupId);
+                const overlay = document.createElement("div");
+                overlay.classList.add("popup-overlay");
+                popup.style.display = "flex";
+                popup.style.justifyContent = "center";
+                popup.style.alignItems = "center";
+                overlay.style.display = "block";
+                document.body.appendChild(overlay);
+
+                function hidePopup() {
+                    popup.style.display = "none";
+                    overlay.style.display = "none";
+                    document.body.removeChild(overlay);
+                }
+
+                document.querySelectorAll(".cancelbtn-popup").forEach(function (cancelButton) {
+                    cancelButton.addEventListener("click", function (cancelEvent) {
+                        cancelEvent.preventDefault();
+                        hidePopup();
+                    });
+                });
+
+                overlay.addEventListener("click", function (event) {
+                    if (event.target === overlay) {
+                        hidePopup();
+                    }
+                });
+
+                popup.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                });
+            });
+        });
+
+        function toggleDropdown(dropdownMenu) {
+            dropdownMenu.classList.toggle('active');
+            dropdownMenu.style.display = dropdownMenu.classList.contains('active') ? 'block' : 'none';
+        }
+
+        function closeOtherDropdowns(currentDropdown) {
+            document.querySelectorAll('.dropdown-menu-forum').forEach(function (dropdownMenu) {
+                if (dropdownMenu !== currentDropdown) {
+                    dropdownMenu.classList.remove('active');
+                    dropdownMenu.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>

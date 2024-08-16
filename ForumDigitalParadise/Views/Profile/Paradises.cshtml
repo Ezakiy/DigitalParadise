@@ -1,0 +1,13 @@
+﻿@model ForumDigitalParadise.Models.ApplicationUser.ProfileModel
+@{
+    string currentView = ViewContext.RouteData.Values["action"]?.ToString();
+
+    Func<string, string> isActive = (string action) =>
+    {
+        return currentView == action ? "active" : "";
+    };
+}
+<a asp-controller="Profile" asp-action="Overview" asp-route-id="@Model.UserId" class="@(currentView == "Overview" ? "active" : "")">Overview</a>
+<a asp-controller="Profile" asp-action="Comments" asp-route-id="@Model.UserId" class="@(currentView == "Comments" ? "active" : "")">Comments</a>
+<a asp-controller="Profile" asp-action="Paradises" asp-route-id="@Model.UserId" class="@(currentView == "Paradises" ? "active" : "")">Paradises</a>
+<a asp-controller="Profile" asp-action="Posts" asp-route-id="@Model.UserId" class="@(currentView == "Posts" ? "active" : "")">Posts</a>

@@ -1,0 +1,58 @@
+﻿@model ForumDigitalParadise.Models.Followers.MyFollowersModel
+@inject Microsoft.AspNetCore.Identity.UserManager<ForumDigitalParadise.Data.Models.ApplicationUser> UserManager
+@inject ForumDigitalParadise.Data.IFollower FollowerService
+@inject ForumDigitalParadise.Data.IApplicationUser ApplicationUserService
+
+<div class="MyFollowers-popup">
+    <div class="frontPage-position">
+        <div class="frontPageLearn">
+            <p class="frontPageSubHeading-Myfollowers">
+                Your Paradise followers
+            </p>
+        </div>
+    </div>
+
+    <hr style="width: 100%; max-width: 920px; height: 1px; border:none; background-color: #91a5e34d;">
+
+    <div class="Myfollowers-TitleInput">
+        <div class="followers-header-search">
+            <input type="text" class="searchbar-MyFollowers" placeholder=" " autocomplete="off" />
+            <label class="placeholder-myfollowers" for="search">Search Followers</label>
+        </div>
+    </div>
+
+    <div class="follower-container-index">
+        @foreach (var follower in Model.Followers)
+        {
+            <div class="followers-item">
+                <div class="follower-section">
+                    <div class="MyFollowers-img">
+                        @{
+                            var profileImageUrl = string.IsNullOrEmpty(follower.FollowerProfileImageUrl)
+                            ? Url.Content("~/img/users/default_image.jpg")
+                            : Url.Content("~/img/ProfileImages/" + follower.FollowerProfileImageUrl);
+                        }
+                        <img src="@profileImageUrl" alt="@follower.FollowerName's Profile Image" class="follower-image" />
+                    </div>
+                    <div class="follower-info" data-user-id="@follower.FollowerId">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 350px;">
+                            <a asp-controller="Profile" asp-action="Overview" asp-route-id="@follower.FollowerId" class="follower-name">u/@follower.FollowerName</a>
+                            @{
+                                var currentUser = UserManager.GetUserAsync(User).Result;
+                                var isFollowing = FollowerService.IsFollowingAsync(currentUser.Id, follower.FollowerId).Result;
+                            }
+                            @if (isFollowing)
+                            {
+                                <button type="button" class="unfollow-button-myfollowers" onclick="MyFollowersunfollowUser('@follower.FollowerId', this)">Unfollow</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="follow-back-button-myfollowers" onclick="MyFollowersfollowUser('@follower.FollowerId', this)">Follow back</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,136 @@
+﻿@model ForumDigitalParadise.Models.User.LoginRegisterViewModel
+@using ForumDigitalParadise.Models.User
+
+<div class="overlay" id="loginOverlay">
+    <div class="center-wrapper">
+        <div class="wrapper">
+            <span class="icon-close" id="closeOverlay">
+                <ion-icon name="close"></ion-icon>
+            </span>
+            <div class="form-box login">
+                <h2>Login</h2>
+                <form id="account" asp-action="login" asp-controller="account">
+                    <div class="input-style">
+                        <span class="icon">
+                            <ion-icon name="person-outline"></ion-icon>
+                        </span>
+                        <input asp-for="LoginModel.Input.Username" type="text" autocomplete="off" required>
+                        <label asp-for="LoginModel.Input.Username">Username</label>
+                    </div>  
+                    <div class="input-style">
+                        <span class="icon" id="passwordToggle">
+                            <ion-icon name="eye-outline"></ion-icon>
+                        </span>
+                        <input id="passwordInput" asp-for="LoginModel.Input.Password" type="password" autocomplete="off" required>
+                        <label asp-for="LoginModel.Input.Password">Password</label>
+                    </div>
+                    <div class="checkbox-style">
+                        <input asp-for="LoginModel.Input.RememberMe" type="checkbox" id="myCheckbox">
+                         <label asp-for="LoginModel.Input.RememberMe" for="myCheckbox">@Html.DisplayNameFor(m => m.LoginModel.Input.RememberMe)</label>
+                    </div>
+                    <div class="forgot-password">
+                        <a id="forgot-password">Forgot your password?</a>
+                    </div>
+                    <div class="text-center">
+                        <button id="login-submit" type="submit" class="button-style-login">Log In</button>
+                    </div>
+                    <br>
+                    <div class="register-link">
+                        <br />
+                        <span class="register-text"> First time in DigitalParadise?</span>
+                        <a href="#">Sign Up</a>
+                    </div>
+                </form>
+            </div>
+
+            @*Register Form*@
+
+            <div class="form-box register">
+                <h3>Registration</h3>
+                <form id="registerForm" asp-action="register" asp-controller="account">
+                    <div class="input-style-register">
+                        <span class="icon">
+                            <ion-icon name="person"></ion-icon>
+                        </span>
+                        <input asp-for="RegisterModel.Input.Username" id="usernameInput" type="text" autocomplete="off" required minlength="2">
+                        <label asp-for="RegisterModel.Input.Username">Username</label>
+                        <div id="usernameRequirements" class="username-requirements">
+                            <p>min. length 2</p>
+                        </div>
+                    </div>
+                    <div class="input-style-register">
+                        <span class="icon">
+                            <ion-icon name="mail"></ion-icon>
+                        </span>
+                        <input asp-for="RegisterModel.Input.Email" type="email" autocomplete="off" required>
+                        <label asp-for="RegisterModel.Input.Email">Email</label>
+                    </div>
+                    <div class="input-style-register">
+                        <span class="icon" id="passwordToggle1">
+                            <ion-icon name="eye-outline"></ion-icon>
+                        </span>
+                        <input id="passwordInput1" asp-for="RegisterModel.Input.Password" type="password" autocomplete="off" required>
+                        <label asp-for="RegisterModel.Input.Password">Password</label>
+                        <div id="passwordRequirements" class="password-requirements">
+                            <p>At least 8 characters</p>
+                            <p>One uppercase letter</p>
+                            <p>One lowercase letter</p>
+                            <p>One number</p>
+                            <p>One special character</p>
+                        </div>
+                    </div>
+                    <div class="input-style-register">
+                        <span class="icon" id="passwordToggle2">
+                            <ion-icon name="eye-outline"></ion-icon>
+                        </span>
+                        <input id="passwordInput2" asp-for="RegisterModel.Input.ConfirmPassword" type="password" autocomplete="off" required>
+                        <label asp-for="RegisterModel.Input.ConfirmPassword">Confirm Password</label>
+                    </div>
+                    <div class="text-center">
+                        <button id="registerSubmit" type="submit" class="button-style-register">Sign Up</button>
+                    </div>
+                    <div class="login-link">
+                        <br />
+                        <span class="login-text"> Already have an account?</span>
+                        <a href="#">Sign In</a>
+                    </div>
+                </form>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const usernameInput = document.getElementById('usernameInput');
+                    const usernameRequirements = document.getElementById('usernameRequirements');
+
+                    usernameInput.addEventListener('focus', function () {
+                        usernameRequirements.style.display = 'block';
+                    });
+
+                    usernameInput.addEventListener('blur', function () {
+                        usernameRequirements.style.display = 'none';
+                    });
+
+                    const passwordInput = document.getElementById('passwordInput1');
+                    const passwordRequirements = document.getElementById('passwordRequirements');
+
+                    passwordInput.addEventListener('focus', function () {
+                        passwordRequirements.style.display = 'block';
+                    });
+
+                    passwordInput.addEventListener('blur', function () {
+                        passwordRequirements.style.display = 'none';
+                    });
+
+                    const inputs = document.querySelectorAll('.input-style-register input');
+
+                    inputs.forEach(input => {
+                        input.addEventListener('blur', function () {
+                            if (input.value) {
+                                input.classList.add('filled');
+                            } else {
+                                input.classList.remove('filled');
+                            }
+                        });
+                    });
+                });
+            </script>

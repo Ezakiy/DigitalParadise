@@ -1,0 +1,200 @@
+﻿@*SIDE NAV*@
+
+<div id="sidenavOverlay" class="sidenav-overlay"></div>
+<aside class="sidenav" id="sidenavContent">
+    <a href="/Home/Index" data-controller="Home" data-action="Index" class="">
+        <ion-icon name="home-outline" class="side-icon"></ion-icon>
+        Home
+    </a>
+    <a href="/Forum/Index" data-controller="Forum" data-action="Index" class="">
+        <ion-icon name="planet-outline" class="side-icon"></ion-icon>
+        Paradises
+    </a>
+    <hr class="responsive-hr" style="border: none; height: 1px; color: white; background-color: #9aabe15c; border: none; width: 100%; max-width:300px;">
+
+    <div class="FollowedUsers">
+        <p class="dropdown-toggle">
+            F O L L O W I N G
+            <ion-icon name="chevron-up-outline"></ion-icon>
+        </p>
+        <div id="followedUsersList" class="dropdown-content">
+        </div>
+    </div>
+
+    <hr class="responsive-hr" style="border: none; height: 1px; color: white; background-color: #9aabe15c; border: none; width: 100%; max-width:300px;">
+
+    <div class="FollowedForums">
+        <p class="dropdown-toggle">
+            P A R A D I S E S
+            <ion-icon name="chevron-up-outline"></ion-icon>
+        </p>
+        <div id="followedForumsList" class="dropdown-content">
+        </div>
+    </div>
+
+    <hr class="responsive-hr" style="border: none; height: 1px; color: white; background-color: #9aabe15c; border: none; width: 100%; max-width:300px;">
+
+    <div class="References">
+        <a href="#aboutme">
+            <img src="~/img/icon_only.png" alt="DigitalParadiseIcon" class="side-icon">
+            About DigitalParadise
+        </a>
+    </div>
+</aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const baseUrl = '@Url.Content("~/")';
+
+        // Fetch followed users (existing functionality)
+        fetch('/api/Followers/followedUsers')
+            .then(response => response.json())
+            .then(users => {
+                const followedUsersList = document.getElementById('followedUsersList');
+                followedUsersList.innerHTML = '';
+
+                if (users.length === 0) {
+                    const noUsersMessage = document.createElement('p');
+                    noUsersMessage.textContent = "You don't follow anyone yet.";
+                    followedUsersList.appendChild(noUsersMessage);
+                } else {
+                    users.forEach(user => {
+                        const listItem = document.createElement('a');
+                        listItem.classList.add('followed-user-item');
+                        listItem.href = `${baseUrl}Profile/Overview/${user.id}`;
+
+                        const profileImageUrl = user.profileImageUrl ?
+                            `${baseUrl}img/ProfileImages/${user.profileImageUrl}` :
+                            `${baseUrl}img/users/default_image.jpg`;
+
+                        listItem.innerHTML = `
+                                            <img src="${profileImageUrl}" alt="${user.displayName || 'Unnamed User'}" class="user-profile-image-sidenav">
+                                            ${user.displayName || 'Unnamed User'}
+                                        `;
+                        followedUsersList.appendChild(listItem);
+                    });
+                }
+
+                const isDropdownOpen = localStorage.getItem('isDropdownOpen') === 'true';
+                const dropdownContent = document.getElementById('followedUsersList');
+                const dropdownToggle = document.querySelector('.FollowedUsers .dropdown-toggle');
+                const hrElement = dropdownContent.parentElement.nextElementSibling;
+
+                if (isDropdownOpen) {
+                    dropdownContent.style.display = 'block';
+                    dropdownContent.style.maxHeight = dropdownContent.scrollHeight + 'px';
+                    dropdownToggle.classList.add('open');
+                } else {
+                    dropdownContent.style.display = 'none';
+                    dropdownContent.style.maxHeight = '0';
+                    dropdownToggle.classList.remove('open');
+                }
+
+                dropdownToggle.addEventListener('click', () => {
+                    if (dropdownContent.style.display === 'none' || dropdownContent.style.display === '') {
+                        dropdownContent.style.display = 'block';
+                        dropdownContent.style.maxHeight = dropdownContent.scrollHeight + 'px';
+                        dropdownToggle.classList.add('open');
+                        localStorage.setItem('isDropdownOpen', 'true');
+                        hrElement.style.display = 'block';
+                    } else {
+                        dropdownContent.style.maxHeight = '0';
+                        setTimeout(() => {
+                            dropdownContent.style.display = 'none';
+                            hrElement.style.display = 'block';
+                        }, 300);
+                        dropdownToggle.classList.remove('open');
+                        localStorage.setItem('isDropdownOpen', 'false');
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching followed users:', error));
+
+        // Fetch followed forums (new functionality)
+        fetch('/api/ForumFollowers/followedForums')
+            .then(response => response.json())
+            .then(forums => {
+                const followedForumsList = document.getElementById('followedForumsList');
+                followedForumsList.innerHTML = '';
+
+                if (forums.length === 0) {
+                    const noForumsMessage = document.createElement('p');
+                    noForumsMessage.textContent = "You don't follow any forums yet.";
+                    followedForumsList.appendChild(noForumsMessage);
+                } else {
+                    // Reverse the order of the forums array to show the most recent first
+                    forums.reverse().forEach(forum => {
+                        const listItem = document.createElement('a');
+                        listItem.classList.add('followed-forum-item');
+                        listItem.href = `${baseUrl}Forum/Topic/${forum.id}`;
+
+                        const forumImageUrl = forum.imageUrl ?
+                            `${baseUrl}img/ForumImages/${forum.imageUrl}` :
+                            `${baseUrl}img/default_forum_image.jpg`;
+
+                        listItem.innerHTML = `
+                                    <img src="${forumImageUrl}" alt="${forum.title}" class="forum-image-sidenav">
+                                    ${forum.title}
+                                `;
+                        followedForumsList.appendChild(listItem);
+                    });
+                }
+
+                const isDropdownOpen = localStorage.getItem('isDropdownOpenForums') === 'true';
+                const dropdownForumsContent = document.getElementById('followedForumsList');
+                const dropdownForumsToggle = document.querySelector('.FollowedForums .dropdown-toggle');
+                const hrElementForums = dropdownForumsContent.parentElement.nextElementSibling;
+
+                if (isDropdownOpen) {
+                    dropdownForumsContent.style.display = 'block';
+                    dropdownForumsContent.style.maxHeight = dropdownForumsContent.scrollHeight + 'px';
+                    dropdownForumsToggle.classList.add('open');
+                } else {
+                    dropdownForumsContent.style.display = 'none';
+                    dropdownForumsContent.style.maxHeight = '0';
+                    dropdownForumsToggle.classList.remove('open');
+                }
+
+                dropdownForumsToggle.addEventListener('click', () => {
+                    if (dropdownForumsContent.style.display === 'none' || dropdownForumsContent.style.display === '') {
+                        dropdownForumsContent.style.display = 'block';
+                        dropdownForumsContent.style.maxHeight = dropdownForumsContent.scrollHeight + 'px';
+                        dropdownForumsToggle.classList.add('open');
+                        localStorage.setItem('isDropdownOpenForums', 'true');
+                        hrElementForums.style.display = 'block';
+                    } else {
+                        dropdownForumsContent.style.maxHeight = '0';
+                        setTimeout(() => {
+                            dropdownForumsContent.style.display = 'none';
+                            hrElementForums.style.display = 'block';
+                        }, 300);
+                        dropdownForumsToggle.classList.remove('open');
+                        localStorage.setItem('isDropdownOpenForums', 'false');
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching followed forums:', error));
+
+        const links = document.querySelectorAll('a[data-controller][data-action]');
+        const currentUrl = window.location.pathname.split('/');
+
+        const currentController = currentUrl[1] || "Home";
+        const currentAction = currentUrl[2] || "Index";
+
+        links.forEach(link => {
+            const controller = link.getAttribute('data-controller');
+            const action = link.getAttribute('data-action');
+
+            if (controller === currentController && action === currentAction) {
+                link.classList.add('active');
+                const icon = link.querySelector('ion-icon');
+                const activeIconName = icon.getAttribute('name').replace('-outline', '');
+                icon.setAttribute('name', activeIconName);
+            }
+        });
+    });
+</script>
+
+
+
+

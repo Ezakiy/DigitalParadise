@@ -1,0 +1,118 @@
+﻿@model ForumDigitalParadise.Models.ApplicationUser.ProfileListModel
+
+@{
+    ViewData["HideSideNav"] = true;
+}
+
+<style>
+    h2 {
+        color: white;
+    }
+
+    .admin-users-table a{
+        color:white;
+        text-decoration: none;
+    }
+
+    .admin-users-table a:hover {
+        text-decoration: underline;
+    }
+</style>
+<div style="margin-top: 0;">
+    <div class="admin-panel">
+        <div class="admin-panel-header">
+            <h2>Users Infomartion</h2>
+        </div>
+
+        <table class="admin-users-table">
+            <thead>
+                <tr>
+                    <th>Profile Image</th>
+                    <th>Display Id</th>
+                    <th>User Id</th>
+                    <th>User Name</th>
+                    <th>Email</th>
+                    <th>Member Since</th>
+                    <th>Rating</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var profile in Model.Profiles)
+                {
+                    <tr>
+                        <td>
+                            <img src="@Url.Content(profile.ProfileImageUrl)" alt="Profile Image" class="profile-image" />
+                        </td>
+                        <td>@profile.DisplayId</td>
+                        <td>@profile.UserId</td>
+                        <td><a asp-controller="Profile" asp-action="Overview" asp-route-id="@profile.UserId">@profile.UserName</a></td>
+                        <td>@profile.Email</td>
+                        <td>@profile.MemberSince.ToShortDateString()</td>
+                        <td>@profile.UserRating</td>
+                        <td>
+                            <button type="submit" class="btn btn-sm btn-danger openPopup" data-popup="popup-@profile.UserId">Delete</button>
+                        </td>
+                    </tr>
+                    <div class="popup-show" id="popup-@profile.UserId" style="display:none;">
+                        <div class="popup-content">
+                            <p>Are you sure you want to perform this action?</p>
+                            <span>This action will permanently remove the item and cannot be undone.</span>
+                            <div class="popup-content-buttons">
+
+                                <form asp-controller="Admin" asp-action="DeleteUser" asp-route-id="@profile.UserId" method="post" class="delete-form">
+                                    <button type="submit" class="submitbtn-popup">Confirm</button>
+                                </form>
+                                <button type="button" class="cancelbtn-popup">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var openButtons = document.querySelectorAll(".openPopup");
+        var cancelButtons = document.querySelectorAll(".cancelbtn-popup");
+        var overlay = document.createElement("div");
+        overlay.classList.add("popup-overlay");
+        document.body.appendChild(overlay);
+
+        function showPopup(popupId) {
+            var popup = document.getElementById(popupId);
+            popup.style.display = "flex";
+            overlay.style.display = "block";
+        }
+
+        function hidePopup() {
+            var popups = document.querySelectorAll(".popup-show");
+            popups.forEach(function (popup) {
+                popup.style.display = "none";
+            });
+            overlay.style.display = "none";
+        }
+
+        openButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                var popupId = button.getAttribute("data-popup");
+                showPopup(popupId);
+            });
+        });
+
+        cancelButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                hidePopup();
+            });
+        });
+
+        overlay.addEventListener("click", function (event) {
+            if (event.target === overlay) {
+                hidePopup();
+            }
+        });
+    });
+</script>

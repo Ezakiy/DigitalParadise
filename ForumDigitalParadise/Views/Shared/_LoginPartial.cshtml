@@ -1,0 +1,18 @@
+﻿@using ForumDigitalParadise.Data.Models;
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@if (!SignInManager.IsSignedIn(User))
+{
+    
+    <nav class="navbar-brand" id="mainNav">
+        <div class="flex items-center">
+            <ul>
+                <li><button class="btnLogin-popup"> Log In </button></li>
+            </ul>
+        </div>
+    </nav>
+}
+
+

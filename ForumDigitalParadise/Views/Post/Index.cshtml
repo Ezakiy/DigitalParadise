@@ -1,0 +1,539 @@
+﻿<style>
+    button{
+        padding: 0;
+    }
+
+    .btn-submitLeave-post, .btn-submitJoin-post {
+        padding: 10px 10px;
+    }
+
+    .reply-section .comment-buttons button, .reply-section .comment-buttons button {
+        padding: 10px 10px;
+    }
+    .postMeta{
+        margin-left: 0;
+        margin-top: 25px;
+    }
+    .like-section, .homeindex-replies{
+        cursor:pointer;
+    }
+</style>
+
+@model ForumDigitalParadise.Models.Composite.CompositeViewPostIndexModel
+@inject Microsoft.AspNetCore.Identity.UserManager<ForumDigitalParadise.Data.Models.ApplicationUser> UserManager
+@inject ForumDigitalParadise.Data.IForumFollower ForumFollowerService
+
+@{
+    ViewData["HideSideNav"] = true;
+}
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var currentUserId = currentUser?.Id;
+    var forumTopic = Model.ForumTopicModel;
+    var forum = forumTopic?.Forum;
+    var isFollowing = forum != null ? await ForumFollowerService.IsFollowingForumAsync(currentUserId, forum.Id) : false;
+    var memberCount = forum != null ? await ForumFollowerService.GetForumFollowersCountAsync(forum.Id) : 0;
+    var followerText = memberCount == 1 ? "Member" : "Members";
+}
+
+<div class="container-post body-content">
+    <div class="page-wrapper-postIndex">
+        <div class="post-container-index">
+            <div class="return-forum">
+                <a asp-controller="Forum" asp-action="Topic" asp-route-Id="@Model.PostIndexModel.ForumId">
+                    <div class="headingBtn">
+                        <ion-icon name="arrow-back-outline" class="go-back-icon"></ion-icon>
+                    </div>
+                </a>
+            </div>
+
+            @{
+                var forumImageUrl = string.IsNullOrEmpty(Model.PostIndexModel.ForumImageUrl)
+                ? Url.Content("~/img/users/default_image.jpg")
+                : Model.PostIndexModel.ForumImageUrl;
+            }
+
+            <div class="postAuthorImage-Index" style="width: 32px; height: 32px;">
+                <img src="@Url.Content(forumImageUrl)" alt="Forum Image" class="img-fluid rounded-circle" style="color:white;">
+            </div>
+
+            <div class="forum-name-info">
+                <div class="forum-details">
+                    <a asp-controller="Forum" asp-action="Topic" asp-route-id="@Model.PostIndexModel.ForumId">
+                        <p>@Model.PostIndexModel.ForumName/paradise</p>
+                    </a>
+                    &nbsp; * &nbsp;
+                    <span class="postData-forum" data-timestamp="@Model.PostIndexModel.Created"></span>
+                </div>
+                <div class="author-info">
+                    <a asp-controller="Profile" asp-action="Overview" asp-route-id="@Model.PostIndexModel.AuthorId">
+                        u/@Model.PostIndexModel.AuthorName
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="post-container-index-item">
+            <div class="frontPage-position-postIndex">
+                <div class="frontPageLearn-postIndex">
+                    <p class="frontPageSubHeading-postIndex">
+                        @Model.PostIndexModel.Title
+                    </p>
+                </div>
+            </div>
+
+            @if (User.Identity.Name == Model.PostIndexModel.AuthorUserName || User.IsInRole("Admin"))
+            {
+                <div class="dropdown-post-index">
+                    <button class="dropdown-btn-forum" type="button" aria-haspopup="true" aria-expanded="false">
+                        <ion-icon class="horizontal-forum-menu" name="ellipsis-horizontal-outline"></ion-icon>
+                    </button>
+                    <div class="dropdown-menu-forum" style="width: 150px;" aria-labelledby="dropdownMenuButton">
+                        <button type="button" class="dropdown-item-forum openPopup">
+                            <ion-icon name="trash" class="iconDelete-forum"></ion-icon> Delete Post
+                        </button>
+                        <button type="button" class="dropdown-item-forum editPost" data-url="@Url.Action("Edit", "Post", new { id = @Model.PostIndexModel.Id })">
+                            <ion-icon class="iconEdit-forum" name="color-wand-outline"></ion-icon> Edit Post
+                        </button>
+                    </div>
+                </div>
+
+                <div class="popup-show" style="display:none;">
+                    <div class="popup-content">
+                        <p>Are you sure you want to perform this action?</p>
+                        <span>This action will permanently remove the item and cannot be undone.</span>
+                        <div class="popup-content-buttons">
+                            <button type="button" class="cancelbtn-popup">Cancel</button>
+                            <form asp-controller="Post" asp-action="Delete" asp-route-id="@Model.PostIndexModel.Id" method="post" class="delete-form">
+                                <button type="submit" class="submitbtn-popup">Confirm</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }     
+
+            @* POST CONTENT *@
+            @if (!string.IsNullOrEmpty(Model.PostIndexModel.PostImageUrl))
+            {
+                <div class="postContentContainer">
+                    <div class="postContent">
+                        <p>@Html.Raw(Model.PostIndexModel.PostContent)</p>
+                    </div>
+                    @* POST IMAGE *@
+                    <div class="postImage-index">
+                        <img src="@Url.Content(Model.PostIndexModel.PostImageUrl)" alt="Post Image" class="img-fluid rounded-circle" style="color:white;">
+                    </div>
+                </div>
+
+            }
+            else
+            {
+                <div class="postContentContainer">
+                    <div class="postContent">
+                        <p>@Html.Raw(Model.PostIndexModel.PostContent)</p>
+                    </div>
+                </div>
+            }
+            <div class="postMeta">
+                <div class="postReplies-separated">
+                    <span class="like-section">
+                        <button class="like-button" data-post-id="@Model.PostIndexModel.Id" aria-label="Like">
+                            <ion-icon name="heart-outline" class="icon-like"></ion-icon>
+                        </button>
+                        <span class="like-count" data-post-id="@Model.PostIndexModel.Id">@Model.PostListingModel.LikesCount</span>
+                    </span>
+                    <span class="homeindex-replies">
+                        <ion-icon class="homeindex-repliesicon" name="chatbox-outline"></ion-icon>
+                        &nbsp;
+                        @Model.PostListingModel.RepliesCount
+                    </span>
+                </div>
+            </div>
+            <div>
+                <div id="replyDivider"></div>
+                <form asp-controller="Reply" asp-action="AddReply" method="post">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="reply-section">
+                        <input asp-for="PostReplyModel.ReplyContent" type="text" placeholder="Add a Comment"
+                               autocomplete="off" class="click-to-edit" id="replyInput"/>
+                        <textarea asp-for="PostReplyModel.ReplyContent" style="display: none;" placeholder="Body"
+                                  autocomplete="off" class="comment-textarea"></textarea>
+                        <span asp-validation-for="PostReplyModel.ReplyContent" class="text-danger"></span>
+
+                        <div class="comment-buttons" style="display: none;">
+                            <button type="button" class="cancel-btn">Cancel</button>
+                            <button type="submit" class="comment-btn">Comment</button>
+                        </div>
+                    </div>
+                    <input asp-for="PostReplyModel.AuthorId" type="hidden" />
+                    <input asp-for="PostReplyModel.PostId" type="hidden" />
+                    <input type="hidden" asp-for="PostIndexModel.Id" />
+                </form>
+
+                @if (Model.PostIndexModel.Replies.Any())
+                {
+                    foreach (var reply in Model.PostIndexModel.Replies.Reverse())
+                    {
+                        <div class="replyAuthorContainer">
+                            <div class="Author-replier-info">
+                                <div style="width: 40px; height: 40px;">
+                                    <img src="@Url.Content(string.IsNullOrEmpty(reply.AuthorImageUrl) ? "~/img/users/default_image.jpg" : "~/img/ProfileImages/" + reply.AuthorImageUrl)" alt="Replier image" style="width: 100%; height: 100%; border-radius: 20px;" />
+                                </div>
+                                <div class="Author-replier-info-detailed">
+                                    <a asp-controller="Profile" asp-action="Overview" asp-route-id="@reply.AuthorId">
+                                        @reply.AuthorName
+                                    </a>
+                                    &nbsp; * &nbsp;
+                                    <span class="time-difference" data-timestamp="@reply.Created"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="replyContent-reply">
+                            <p>@Html.Raw(reply.ReplyContent)</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="noReplies">
+                        <p>Be the first to comment</p>
+                    </div>
+                    <div class="noReplies-detail">
+                        <p>Nobody's responded to this post yet.</p>
+                        <span>Add your thoughts and get the conversation going.</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<aside>
+    <div class="sidebar">
+        <div class="center-sidebar-content">
+            <div class="sidebar-forum-image">
+                <img src="@Url.Content(Model.PostIndexModel.ForumImageUrl)" alt="Paradise Image" class="img-fluid rounded-circle" style="width: 42px; height: 42px; border-radius: 50px; color:white;">
+            </div>
+            <div class="sidebar-forum-details">
+                <p>@Model.PostIndexModel.ForumName</p>
+                <div id="followUnfollowSection">
+                    @if (isFollowing)
+                    {
+                        <div id="followButton">
+                            <button type="button" class="btn-submitLeave-post" onclick="unfollowForum('@Model.ForumTopicModel.Forum.Id')">Joined</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div id="followButton">
+                            <button type="button" class="btn-submitJoin-post" onclick="followForum('@Model.ForumTopicModel.Forum.Id')">Join Paradise</button>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="sidebar-forum-title">
+                <p>@Model.PostIndexModel.ForumName</p>
+            </div>
+            <div class="sidebar-forum-minidescription">
+                <p>@Model.PostIndexModel.ForumMiniDescription</p>
+            </div>
+        </div>
+        <hr style="width: 100%; max-width: 300px; height: 1px; color: white; background-color: #9aabe15c; border: none;">
+        <div style="margin-top: 30px;">
+            <div class="sidebar-forum-about">
+                <p>ABOUT</p>
+            </div>
+            <div class="sidebar-forum-description">
+                <p>@Model.PostIndexModel.ForumDescription</p>
+            </div>
+        </div>
+        <hr style="width: 100%; max-width: 300px; height: 1px; color: white; background-color: #9aabe15c; border: none;">
+        <div class="members-forum">
+            <p id="followerCount">@memberCount</p>
+            <span>@followerText</span>
+        </div>
+    </div>
+</aside>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+
+    async function followForum(forumId) {
+        const response = await fetch('/api/ForumFollowers/follow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(forumId)
+        });
+        const result = await response.json();
+        if (result.success) {
+            await refreshFollowStatus(forumId);
+        }
+    }
+
+    async function unfollowForum(forumId) {
+        const response = await fetch('/api/ForumFollowers/unfollow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(forumId)
+        });
+        const result = await response.json();
+        if (result.success) {
+            await refreshFollowStatus(forumId);
+        }
+    }
+
+    async function refreshFollowStatus(forumId) {
+        const response = await fetch('/api/ForumFollowers/isFollowing/' + forumId);
+        const result = await response.json();
+        const followButton = document.getElementById('followButton');
+        const followerCount = document.getElementById('followerCount');
+        if (result.isFollowing) {
+            followButton.innerHTML = '<button type="button" class="btn-submitLeave-post" onclick="unfollowForum(\'' + forumId + '\')">Joined</button>';
+            followerCount.innerText = parseInt(followerCount.innerText) + 1;
+        } else {
+            followButton.innerHTML = '<button type="button" class="btn-submitJoin-post" onclick="followForum(\'' + forumId + '\')">Join Paradise</button>';
+            followerCount.innerText = parseInt(followerCount.innerText) - 1;
+        }
+    }
+
+
+    document.getElementById("replyInput").addEventListener("click", function () {
+        var isAuthenticated = '@User.Identity.IsAuthenticated';
+
+        if (isAuthenticated !== 'True') {
+            window.location.href = '/Identity/Account/Register';
+        }
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        document.querySelectorAll('.like-button').forEach(button => {
+            button.addEventListener('click', async function (event) {
+                event.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                const likeCountSpan = document.querySelector(`.like-count[data-post-id="${postId}"]`);
+                const icon = this.querySelector('.icon-like');
+
+                const isLiked = icon.name === 'heart';
+
+                const response = await fetch(`/api/postlike/${postId}/${isLiked ? 'unlike' : 'like'}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    if (isLiked) {
+                        icon.name = 'heart-outline';
+                        likeCountSpan.textContent = parseInt(likeCountSpan.textContent) - 1;
+                    } else {
+                        icon.name = 'heart';
+                        likeCountSpan.textContent = parseInt(likeCountSpan.textContent) + 1;
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.like-count').forEach(async (span) => {
+            const postId = span.getAttribute('data-post-id');
+            const response = await fetch(`/api/postlike/${postId}/likes`);
+            if (response.ok) {
+                const count = await response.json();
+                span.textContent = count;
+            }
+
+            const likeResponse = await fetch(`/api/postlike/${postId}/islikedbyuser`);
+            if (likeResponse.ok) {
+                const isLiked = await likeResponse.json();
+                const likeButton = document.querySelector(`.like-button[data-post-id="${postId}"] .icon-like`);
+                if (isLiked) {
+                    likeButton.name = 'heart';
+                } else {
+                    likeButton.name = 'heart-outline';
+                }
+            }
+        });
+
+        document.querySelectorAll('.dropdown-btn-forum').forEach(function (dropdownBtn) {
+            dropdownBtn.addEventListener('click', function (event) {
+                event.stopPropagation();
+                event.preventDefault();
+                const dropdownMenu = this.nextElementSibling;
+                toggleDropdown(dropdownMenu);
+                closeOtherDropdowns(dropdownMenu);
+            });
+        });
+
+        document.addEventListener('click', function (event) {
+            document.querySelectorAll('.dropdown-menu-forum').forEach(function (dropdownMenu) {
+                if (!dropdownMenu.previousElementSibling.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.classList.remove('active');
+                    dropdownMenu.style.display = 'none';
+                }
+            });
+        });
+
+        document.querySelectorAll('.editPost').forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+                window.location.href = this.getAttribute('data-url');
+            });
+        });
+
+        // Open popup
+        document.querySelectorAll(".openPopup").forEach(function (openButton) {
+            openButton.addEventListener("click", function (event) {
+                event.stopPropagation();
+                event.preventDefault();
+                const popup = this.closest('.post-container-index-item').querySelector(".popup-show");
+                const overlay = document.createElement("div");
+                overlay.classList.add("popup-overlay");
+                popup.style.display = "flex";
+                popup.style.justifyContent = "center";
+                popup.style.alignItems = "center";
+                overlay.style.display = "block";
+                document.body.appendChild(overlay);
+
+                function hidePopup() {
+                    popup.style.display = "none";
+                    overlay.style.display = "none";
+                    document.body.removeChild(overlay);
+                }
+
+                document.querySelectorAll(".cancelbtn-popup").forEach(function (cancelButton) {
+                    cancelButton.addEventListener("click", function (cancelEvent) {
+                        cancelEvent.preventDefault();
+                        hidePopup();
+                    });
+                });
+
+                overlay.addEventListener("click", function (event) {
+                    if (event.target === overlay) {
+                        hidePopup();
+                    }
+                });
+
+                popup.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                });
+            });
+        });
+
+        function toggleDropdown(dropdownMenu) {
+            dropdownMenu.classList.toggle('active');
+            dropdownMenu.style.display = dropdownMenu.classList.contains('active') ? 'block' : 'none';
+        }
+
+        function closeOtherDropdowns(currentDropdown) {
+            document.querySelectorAll('.dropdown-menu-forum').forEach(function (dropdownMenu) {
+                if (dropdownMenu !== currentDropdown) {
+                    dropdownMenu.classList.remove('active');
+                    dropdownMenu.style.display = 'none';
+                }
+            });
+        }
+    });
+
+    $(document).ready(function () {
+        $(".click-to-edit").click(function () {
+            var input = $(this);
+            var textarea = input.siblings("textarea");
+            var buttonsDiv = input.siblings(".comment-buttons");
+
+            textarea.show().focus();
+            buttonsDiv.show();
+
+            input.hide();
+
+            input.closest('.reply-section').css('border', '1px solid #4a4a4a');
+        });
+    });
+
+    $(document).on("click", ".comment-btn", function () {
+        var buttonsDiv = $(this).parent();
+        var textarea = buttonsDiv.siblings("textarea");
+        var input = textarea.siblings("input");
+
+        input.val(textarea.val());
+
+    });
+
+    $(document).on("click", ".cancel-btn", function () {
+        var buttonsDiv = $(this).parent();
+        var textarea = buttonsDiv.siblings("textarea");
+        var input = textarea.siblings("input");
+
+        textarea.hide().val("");
+        input.show();
+        buttonsDiv.hide();
+
+        input.closest('.reply-section').css('border', 'none');
+    });
+
+    // Time posted
+    document.addEventListener("DOMContentLoaded", function () {
+        function getTimeDifference(createdTime) {
+            const now = new Date();
+            const diffMs = now - new Date(createdTime);
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            const diffMonths = Math.floor(diffDays / 30);
+
+            if (diffMins < 1) {
+                return 'just now';
+            } else if (diffMins < 60) {
+                return diffMins + ' min. ago';
+            } else if (diffHours < 24) {
+                return diffHours + ' hr. ago';
+            } else if (diffDays < 30) {
+                return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
+            } else {
+                return diffMonths + ' mo.' + (diffMonths > 1 ? 's' : '') + ' ago';
+            }
+        }
+
+        document.querySelectorAll('.postData-forum').forEach(function (span) {
+            const timestamp = span.getAttribute('data-timestamp');
+            if (timestamp) {
+                span.textContent = 'posted ' + getTimeDifference(timestamp);
+            }
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        function getTimeDifference(createdTime) {
+            const now = new Date();
+            const diffMs = now - new Date(createdTime);
+            const diffSecs = Math.floor(diffMs / 1000);
+            const diffMins = Math.floor(diffSecs / 60);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            const diffMonths = Math.floor(diffDays / 30);
+
+            if (diffSecs < 60) {
+                return diffSecs + ' sec.' + ' ago';
+            } else if (diffMins < 60) {
+                return diffMins + ' min' + ' ago';
+            } else if (diffHours < 24) {
+                return diffHours + ' hr.' + ' ago';
+            } else if (diffDays < 30) {
+                return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
+            } else {
+                return diffMonths + ' mo.' + ' ago';
+            }
+        }
+
+        document.querySelectorAll('.time-difference').forEach(function (span) {
+            const timestamp = span.getAttribute('data-timestamp');
+            if (timestamp) {
+                span.textContent = 'commented ' + getTimeDifference(timestamp);
+            }
+        });
+    });
+
+</script>

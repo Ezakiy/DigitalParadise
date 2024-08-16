@@ -1,0 +1,225 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model ForumDigitalParadise.Models.ApplicationUser.SettingsModel
+@inject UserManager<ForumDigitalParadise.Data.Models.ApplicationUser> UserManager;
+
+<style>
+    body {
+        background-color: rgb(16, 16, 16);
+    }
+
+    .chars-remaining-warning {
+        color: red;
+    }
+
+    .active {
+        font-weight: bold;
+    }
+</style>
+
+@{
+    ViewData["HideSideNav"] = true;
+}
+
+<div class="settings-page-body">
+    <div class="settings-center-page">
+    <div class="page-wrapper-user-details">
+        <div class="sectionHeading-user-details">
+            <p>User Settings</p>
+        </div>
+        <ul class="tab-nav">
+            <li class="tab-link active" data-tab="account">Account</li>
+            <li class="tab-link" data-tab="profile">Profile</li>
+        </ul>
+        <hr style="width: 100%; max-width: 1110px; height: 1px; color: white; background-color: #9aabe15c; border: none;">
+        <div class="userSettings">
+            <div id="account" class="tab-content active">
+                <div class="account-settings">
+                    <p>Account Settings</p>
+                </div>
+                <div class="account-information">
+                    <p>ACCOUNT PREFERENCES</p>
+                    <hr style="width: 100%; max-width: 650px; margin-right: 33.25em; height: 1px; color: white; background-color: #9aabe15c; border: none;">
+                </div>
+                <form asp-controller="Profile" asp-action="Settings" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="UserId" />
+                    <input type="hidden" asp-for="MemberSince" />
+                    <div class="user-details">
+                        <label asp-for="Email">Email: </label>
+                        <div class="settings-email">
+                            <input asp-for="Email" placeholder="" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="profile" class="tab-content">
+                <div class="profile-settings">
+                    <p>Customize Profile</p>
+                </div>
+                <div class="profile-information">
+                    <p>PROFILE INFORMATION</p>
+                </div>
+                <hr style="width: 100%; max-width: 650px; margin-right: 33.25em; height: 1px; color: white; background-color: #9aabe15c; border: none;">
+
+                <form asp-controller="Profile" asp-action="UpdateProfile" method="post" enctype="multipart/form-data" id="profile-form">
+                    <div class="user-details">
+                        <div class="username-info-input">
+                            <label asp-for="DisplayName">Display name (optional) </label>
+                            <p>Set a display name. This does not change your username login.</p>
+                        </div>
+                        <div class="settings-username">
+                            <input asp-for="DisplayName" placeholder="Display name (optional)" minlength="2" maxlength="26" autocomplete="off" oninput="updateCharacterCount(this, 26, 'username-chars-remaining')" onblur="autoSave('DisplayName', this.value)" />
+                        </div>
+                        <div class="chars-remaining-username"><span id="username-chars-remaining">26 Characters remaining</span> <br /><span>min length 2 characters.</span></div>
+
+                        <div class="username-info-Description">
+                            <label asp-for="UserDescription">About (optional)</label>
+                            <p>The description you decide to share will be displayed in your profile.</p>
+                        </div>
+                        <div class="settings-description">
+                            <textarea asp-for="UserDescription" placeholder="About (optional)" autocomplete="off" maxlength="200" oninput="updateCharacterCount(this, 200, 'description-chars-remaining')" onblur="autoSave('UserDescription', this.value)"></textarea>
+                        </div>
+                        <div class="chars-remaining-description"><span id="description-chars-remaining">200 Characters remaining</span></div>
+                        <div class="settings-membersince">
+                            <span>Member Since: @Model.MemberSince.ToString("MMMM dd, yyyy")</span>
+                        </div>
+
+                        @Html.AntiForgeryToken()
+                    </div>
+                </form>
+
+                @* Add profile and banner image change sections *@
+
+                <div class="profile-information">
+                    <p>IMAGES</p>
+                </div>
+
+                <hr style="width: 100%; max-width: 650px; margin-right: 33.25em; height: 1px; color: white; background-color: #9aabe15c; border: none;">
+
+                <div class="userImage-settings-details">
+                    <div class="user-profile-image-settings">
+                        <img src="@Url.Content(Model.ProfileImageUrl)" alt="Profile Image" />
+                        <ion-icon class="camera-icon-image-settings" name="camera-outline" onclick="triggerProfileUpload()"></ion-icon>
+                        <form id="profileImageForm" asp-action="UploadProfileImageSettings" asp-controller="Profile" enctype="multipart/form-data" method="post" style="display: none;">
+                            <input type="file" id="profileImageInput" name="file" accept="image/*" onchange="submitProfileForm()">
+                        </form>
+                    </div>
+                
+                <!-- Banner Upload Section -->
+                    <div class="profile-banner-settings">
+                        <div id="bannerUploadArea" class="upload-area">
+                            @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
+                            {
+                                <img src="@Url.Content(Model.BannerImageUrl)" alt="Banner Image">
+                            }
+                            else
+                            {
+                                <p>Drag and Drop or Upload Banner Image</p>
+                            }
+                            <ion-icon class="camera-icon-bannersettings" name="camera-outline" onclick="triggerBannerUpload()"></ion-icon>
+                            <form id="bannerImageForm" asp-action="UploadBannerImage" asp-controller="Profile" enctype="multipart/form-data" method="post" style="display: none;">
+                                <input type="file" id="bannerImageInputForm" name="bannerImage" accept="image/*" onchange="submitBannerForm()">
+                            </form>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+        </div>
+</div>
+<br />
+<br />
+<br />
+<br />
+<script>
+    function triggerProfileUpload() {
+        document.getElementById('profileImageInput').click();
+    }
+
+    function submitProfileForm() {
+        document.getElementById('profileImageForm').submit();
+    }
+
+    function triggerBannerUpload() {
+        document.getElementById('bannerImageInputForm').click();
+    }
+
+    function submitBannerForm() {
+        document.getElementById('bannerImageForm').submit();
+    }
+
+
+
+    document.querySelectorAll('.tab-link').forEach(tab => {
+        tab.addEventListener('click', function () {
+            document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            this.classList.add('active');
+            document.getElementById(this.dataset.tab).classList.add('active');
+        });
+    });
+
+    const inputs = document.querySelectorAll('input[asp-for], textarea[asp-for]');
+    inputs.forEach(input => {
+        input.addEventListener('input', function () {
+            this.setAttribute('data-changed', 'true');
+            updateCharacterCount(this, this.maxLength, `${this.name}-chars-remaining`);
+        });
+
+        input.addEventListener('blur', function () {
+            if (this.getAttribute('data-changed') === 'true') {
+                this.setAttribute('data-changed', 'false');
+                autoSave(this.name, this.value);
+            }
+        });
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        updateCharacterCount(document.querySelector('input[asp-for="DisplayName"]'), 26, 'username-chars-remaining');
+        updateCharacterCount(document.querySelector('textarea[asp-for="UserDescription"]'), 200, 'description-chars-remaining');
+       
+    });
+
+    function updateCharacterCount(element, maxLength, displayId) {
+        const remaining = maxLength - element.value.length;
+        const displayElement = document.getElementById(displayId);
+        displayElement.innerText = `${remaining} Characters remaining`;
+
+        if (remaining <= 0) {
+            displayElement.classList.add('chars-remaining-warning');
+        } else {
+            displayElement.classList.remove('chars-remaining-warning');
+        }
+    }
+
+    function autoSave(fieldName, fieldValue) {
+        const formData = new FormData();
+        formData.append(fieldName, fieldValue);
+        formData.append("__RequestVerificationToken", document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+        fetch('@Url.Action("UpdateProfile", "Profile")', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`${fieldName} saved successfully.`);
+                    displayTempDataMessage(data.message);
+                } else {
+                    console.error(`Failed to save ${fieldName}.`);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+
+    function displayTempDataMessage(message) {
+        toastr.success('<span class="toast-message"> Changes Saved </span><ion-icon class="check-indicator-toaster" name="close-outline"></ion-icon>');
+    }
+</script>
+

@@ -1,0 +1,269 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ForumDigitalParadise</title>
+    <link rel="stylesheet" href="~/css/users.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/viewers.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/header.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/forum.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/post.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Inboxes.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/search.css" asp-append-version="true" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet" asp-append-version="true">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" asp-append-version="true">
+
+    <!-- Preload Ionicons scripts -->
+    <link rel="preload" href="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js" as="script" />
+    <link rel="preload" href="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js" as="script" />
+</head>
+<body>
+    <div id="myFollowersModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="followersContent" class="skeleton">
+                <div class="skeleton-circle"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+            </div>
+        </div>
+    </div>
+    <div id="mainContent" class="skeleton">
+        <div class="skeleton-text"></div>
+        <div class="skeleton-text"></div>
+        <div class="skeleton-text"></div>
+    </div>
+
+    @await Component.InvokeAsync("Header")
+
+    @if (!ViewData.ContainsKey("HideSideNav") || !(bool)ViewData["HideSideNav"])
+    {
+        @await Component.InvokeAsync("SideNav")
+    }
+
+    <div id="myFollowersModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="followersContent">
+            </div>
+        </div>
+    </div>
+
+    @await Component.InvokeAsync("SwitchAccounts")
+
+    @RenderBody()
+
+    @await Component.InvokeAsync("LoginWrapper")
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/script.js" asp-append-version="true"></script>
+    <script src="~/js/User.js" asp-append-version="true"></script>
+    <script src="~/js/Side.js" asp-append-version="true"></script>
+    <script src="~/js/dropdown.js" asp-append-version="true"></script>
+    <script src="~/js/ProfileImage.js" asp-append-version="true"></script>
+    <!-- Load Ionicons scripts with async -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js" async></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js" async></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
+    <script>
+     
+        document.addEventListener("DOMContentLoaded", function () {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/notificationHub")
+                .build();
+
+            connection.on("ReceiveNotification", function (notificationData) {
+                toastr.success(`<span class="toast-message">${notificationData.message}</span><ion-icon class="check-indicator-toaster" name="close-outline"></ion-icon>`);
+                loadNotifications();
+                fetchUnreadNotificationsCount();
+            });
+
+            connection.start().then(function () {
+                console.log('SignalR connection established');
+                loadNotifications();
+                fetchUnreadNotificationsCount();
+            }).catch(function (err) {
+                console.error('SignalR connection error:', err.toString());
+            });
+
+            async function loadNotifications() {
+                try {
+                    const response = await fetch('/api/notification');
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const notifications = await response.json();
+                    const notificationsBody = document.getElementById('notificationsBody');
+                    notificationsBody.innerHTML = '';
+
+                    if (notifications.length > 0) {
+                        for (const notification of notifications) {
+                            const notificationElement = document.createElement('div');
+                            notificationElement.classList.add('notification-item');
+
+                            const profileImageElement = document.createElement('img');
+                            profileImageElement.src = notification.profileImageUrl;
+                            profileImageElement.alt = `${notification.username}'s profile picture`;
+                            profileImageElement.classList.add('profile-image-notification');
+
+                            const messageContainer = document.createElement('div');
+                            messageContainer.classList.add('message-container');
+
+                            const messageAndTimeContainer = document.createElement('div');
+                            messageAndTimeContainer.classList.add('message-time-container');
+
+                            const messageElement = document.createElement('span');
+                            messageElement.innerHTML = notification.message; 
+                            messageElement.classList.add('message-text');
+
+                            const followedAt = new Date(notification.createdAt);
+                            const timeAgo = getTimeDifference(followedAt);
+
+                            const timeAgoElement = document.createElement('span');
+                            timeAgoElement.textContent = timeAgo;
+                            timeAgoElement.classList.add('time-ago');
+
+                            messageAndTimeContainer.appendChild(messageElement);
+                            messageAndTimeContainer.appendChild(timeAgoElement);
+
+                            messageContainer.appendChild(messageAndTimeContainer);
+
+                            notificationElement.appendChild(profileImageElement);
+                            notificationElement.appendChild(messageContainer);
+                            notificationsBody.appendChild(notificationElement);
+                        }
+                    } else {
+                        notificationsBody.innerHTML = '<p>You don\'t have any notifications</p>';
+                    }
+
+                    document.getElementById('mainContent').classList.remove('skeleton');
+                    document.getElementById('followersContent').classList.remove('skeleton');
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            }
+
+
+
+
+            async function fetchUnreadNotificationsCount() {
+                try {
+                    const response = await fetch('/api/notification/unread-count');
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json();
+                    const unreadCount = data.unreadCount;
+                    const unreadNotificationsCountElement = document.getElementById('unreadNotificationsCount');
+
+                    if (unreadCount > 9) {
+                        unreadNotificationsCountElement.textContent = '9+';
+                        unreadNotificationsCountElement.style.display = 'inline';
+                    } else if (unreadCount > 0) {
+                        unreadNotificationsCountElement.textContent = unreadCount.toString();
+                        unreadNotificationsCountElement.style.display = 'inline';
+                    } else {
+                        unreadNotificationsCountElement.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error fetching unread notifications count:', error);
+                }
+            }
+
+            async function markAllNotificationsAsRead() {
+                try {
+                    const response = await fetch('/api/notification/mark-all-as-read', {
+                        method: 'POST'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    fetchUnreadNotificationsCount();
+                } catch (error) {
+                    console.error('Error marking notifications as read:', error);
+                }
+            }
+
+            setInterval(function () {
+                loadNotifications();
+                fetchUnreadNotificationsCount();
+            }, 30000);
+
+            document.getElementById('notificationIcon').addEventListener('click', function () {
+                markAllNotificationsAsRead();
+                const unreadNotificationsCountElement = document.getElementById('unreadNotificationsCount');
+                unreadNotificationsCountElement.style.display = 'none';
+            });
+            fetchUnreadNotificationsCount();
+
+            function getTimeDifference(createdTime) {
+                const now = new Date();
+                const diffMs = now - new Date(createdTime);
+                const diffSecs = Math.floor(diffMs / 1000);
+                const diffMins = Math.floor(diffSecs / 60);
+                const diffHours = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHours / 24);
+                const diffMonths = Math.floor(diffDays / 30);
+
+                if (diffSecs < 60) {
+                    return diffSecs + ' sec.' + (diffSecs > 1 ? '' : '') + ' ago';
+                } else if (diffMins < 60) {
+                    return diffMins + ' min.' + (diffMins > 1 ? '' : '') + ' ago';
+                } else if (diffHours < 24) {
+                    return diffHours + ' hr.' + (diffHours > 1 ? '' : '') + ' ago';
+                } else if (diffDays < 30) {
+                    return diffDays + ' day.' + (diffDays > 1 ? '' : '') + ' ago';
+                } else {
+                    return diffMonths + ' mo.' + (diffMonths > 1 ? '' : '') + ' ago';
+                }
+            }
+        });
+
+        $(window).on('load', function () {
+            var progress = 0;
+            var interval = setInterval(function () {
+                progress += 10;
+                $('#progress-bar').css('width', progress + '%');
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    $('#progress-bar-container').fadeOut('slow', function () {
+                        $(this).remove();
+                    });
+                }
+            }, 200);
+
+            toastr.options.positionClass = 'toast-bottom-center';
+            toastr.options.showMethod = 'fadeIn';
+            toastr.options.hideMethod = 'fadeOut';
+            toastr.options.showDuration = 500;
+            toastr.options.hideDuration = 300;
+            toastr.options.timeOut = 3000;
+            toastr.options.extendedTimeOut = 1000;
+            toastr.options.toastClass = 'custom-toast';
+
+            var successMessage = '@TempData["SuccessMessage"]';
+            if (successMessage) {
+                toastr.success('<span class="toast-message">' + successMessage + '</span><ion-icon class="check-indicator-toaster" name="close-outline"></ion-icon>');
+            }
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
